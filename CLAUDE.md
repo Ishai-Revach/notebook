@@ -21,7 +21,7 @@
 
 ## Hard rules
 
-**Ishai is the only publisher.** Never push to a remote, never create a GitHub repo, never publish to npm, never deploy. Local git commits are fine and expected. When something is ready to go out, say so and stop. He fires it.
+**Ishai approves every publish action.** Pushing to a remote, creating a GitHub repo, publishing to npm, or deploying only happens when he explicitly asks for it in that specific moment, never assumed from earlier context. Local git commits are fine and expected on their own. When something is ready to go out, say so and wait for him to say go.
 
 **No em-dashes or en-dashes, and no arrow character.** Grep every file before finishing: `grep -n $'—\|–\|→'` must come back empty. Use a hyphen, comma, period, semicolon, or parens. This is zero tolerance and it applies to code comments and commit messages too.
 
