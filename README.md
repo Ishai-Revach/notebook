@@ -1,4 +1,4 @@
-# Notebook
+# Scrapbook
 
 A place to keep documents that can be anything, where your agent is one of the authors.
 
@@ -11,7 +11,7 @@ You open it like an app. It holds your pages. Some are writing, some are diagram
 1. Install it once on your computer.
 2. Open it. It asks you to point a workspace at a project folder.
 3. It creates everything it needs inside that folder. You do not set anything up.
-4. Tell your agent what you want. It already knows the notebook is there.
+4. Tell your agent what you want. It already knows the scrapbook is there.
 
 Repeat step 2 for every project. Client work, home stuff, whatever. Each one is separate and cannot see the others. One menu at the top switches between them.
 
@@ -50,7 +50,7 @@ When the app sets up your project folder, it puts its own files there too: the d
 
 That means two things:
 
-- **You never have to look at them.** Ignore all of it and the notebook works fine.
+- **You never have to look at them.** Ignore all of it and the scrapbook works fine.
 - **When you want something different, your agent just changes it.** No special mode, no settings you have to find. The code is sitting right there, so "make the menu work differently" is a normal request.
 
 I keep improving the shipped version. When there is an update, you get told, and pulling it in keeps whatever you changed. If something breaks, there is a way to boot the original and fix it.
@@ -65,7 +65,7 @@ It is a suggestion, not a rule. Tell the agent to do something different and it 
 
 An "app" is a page that does something rather than says something. The task board is one. A calculator, an image cropper, a morning brief, a timer.
 
-- The app menu lists what you can add. One click and it is in your notebook.
+- The app menu lists what you can add. One click and it is in your scrapbook.
 - You can ask your agent to build a new one. It becomes a page in your project like anything else.
 - You can put yours on GitHub for other people to install.
 - A **shared piece** is smaller: an area of a page, or a whole page with its content, that someone else can drop into theirs.

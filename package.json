@@ -1,10 +1,10 @@
 {
-  "name": "notebook-hub",
+  "name": "scrapbook-hub",
   "version": "0.0.0",
   "description": "A place to keep documents that can be anything, where your agent is one of the authors.",
   "license": "MIT",
   "type": "module",
-  "bin": { "nbk": "bin/nbk.js" },
+  "bin": { "sbk": "bin/sbk.js" },
   "engines": { "node": ">=20" },
   "scripts": { "test": "node --test" },
   "files": ["bin", "src"]

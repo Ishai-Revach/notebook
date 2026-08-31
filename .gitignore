@@ -7,7 +7,7 @@ out/
 *.tsbuildinfo
 
 # local runtime
-.notebook-local/
+.scrapbook-local/
 *.log
 logs/
 

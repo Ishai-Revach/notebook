@@ -1,4 +1,4 @@
-# Notebook, kernel and kit
+# Scrapbook, kernel and kit
 
 > The decision about what lives once and what gets copied into every workspace, and why.
 > Supersedes the layered-resolver model in the first draft of `CUSTOMIZATION.md`.
@@ -10,7 +10,7 @@
 
 Ishai's proposal: the workspace sits inside each project folder, and one hub application loads all of them. The hub creates the folder structure, downloads the files it needs, and everything (design system, runtime, tools) is duplicated per workspace so the agent has the entire codebase in front of it. The agent may change anything except the link back to the hub, which owns the one menu for crossing between workspaces.
 
-The alternative, from the first draft: one engine installed once, thin per-workspace overrides resolved at request time, `nbk eject` when you want to own a file.
+The alternative, from the first draft: one engine installed once, thin per-workspace overrides resolved at request time, `sbk eject` when you want to own a file.
 
 ## 2. What the proposal gets right
 
@@ -40,7 +40,7 @@ Split by mutability, not by location. Two parts, one boundary.
 
 | | Kernel (installed once) | Kit (copied per workspace) |
 |---|---|---|
-| Where | the hub, global install | `<project>/notebook/` |
+| Where | the hub, global install | `<project>/scrapbook/` |
 | Contents | daemon, write API, registry, update, hub chrome, CLI | design system, runtime, nav, chrome, edit mode, tool host, templates, tools, library entries in use |
 | Changeable | no | anything, freely |
 | Upgrades | with the hub | opt-in, per file, three-way merged |
@@ -56,7 +56,7 @@ Vendoring is only sane with a merge mechanism. This is the part that has to exis
 When the hub vendors the kit, it writes a manifest:
 
 ```json
-// <project>/notebook/.notebook/vendor.json
+// <project>/scrapbook/.scrapbook/vendor.json
 {
   "schema": 1,
   "kitVersion": "1.4.2",
@@ -72,14 +72,14 @@ When the hub vendors the kit, it writes a manifest:
 The hash is of the pristine shipped version, which makes the only question that matters answerable: **did you change this file?**
 
 ```
-nbk update            three-way merge the kit to the current version
-nbk update --dry-run  what would change, per file
-nbk update --check    is an update available
-nbk diff <path>       your version against pristine
-nbk restore <path>    throw away local changes to one file
+sbk update            three-way merge the kit to the current version
+sbk update --dry-run  what would change, per file
+sbk update --check    is an update available
+sbk diff <path>       your version against pristine
+sbk restore <path>    throw away local changes to one file
 ```
 
-`nbk update` walks every file and does one of four things:
+`sbk update` walks every file and does one of four things:
 
 | Your file | Upstream | Action |
 |---|---|---|
@@ -92,8 +92,8 @@ Never a silent overwrite of something you edited, and never a blocked update bec
 
 Two supporting rules:
 
-- **`notebook.json` config is the low-risk path, still.** Changing the accent through config rather than editing `tokens.css` means the file stays unmodified and keeps receiving upstream fixes. Worth saying in the docs: configure when you can, edit when you want to. Not a restriction, just cheaper.
-- **Workspaces pin their kit version and never auto-update.** Upgrading the hub changes nothing in any project until you run `nbk update` in it. That is the per-project stability you were reaching for, made explicit.
+- **`scrapbook.json` config is the low-risk path, still.** Changing the accent through config rather than editing `tokens.css` means the file stays unmodified and keeps receiving upstream fixes. Worth saying in the docs: configure when you can, edit when you want to. Not a restriction, just cheaper.
+- **Workspaces pin their kit version and never auto-update.** Upgrading the hub changes nothing in any project until you run `sbk update` in it. That is the per-project stability you were reaching for, made explicit.
 
 ## 6. The hub
 
@@ -102,37 +102,37 @@ One application, the only thing you cannot change, exactly as you described. It 
 **Creating a workspace** is what you described and it is right:
 
 ```
-nbk new-workspace ~/some/project --label "Some Project"
+sbk new-workspace ~/some/project --label "Some Project"
 ```
 
-or the same flow from the hub UI: pick a directory, name it, and it creates `notebook/` inside, vendors the current kit, registers the workspace, writes the agent pointer blocks, and opens it. One action, and the project now contains a complete, editable notebook.
+or the same flow from the hub UI: pick a directory, name it, and it creates `scrapbook/` inside, vendors the current kit, registers the workspace, writes the agent pointer blocks, and opens it. One action, and the project now contains a complete, editable scrapbook.
 
 **The switcher, and what "cannot change" means.** Being precise here matters, because an invariant that is too strict is annoying and one that is too loose lets you lock yourself out:
 
 - **Guaranteed by the kernel:** the switcher exists, lists every registered workspace, and works. A workspace cannot remove it, break it, or hide it. It is served by the kernel, not by the workspace's own runtime, so a broken kit cannot take it down.
 - **Themeable:** it reads the active workspace's tokens so it looks like it belongs. Appearance yours, existence not.
 - **Always reachable:** a kernel route (`/hub`) and a keyboard shortcut that the workspace cannot intercept. Even with a completely broken workspace, you can get out.
-- **`nbk run --safe`** boots the kernel chrome with the shipped kit and ignores the workspace's version entirely. This is the recovery path, and it is also the fastest triage question for any issue anyone files: does it still happen in safe mode.
+- **`sbk run --safe`** boots the kernel chrome with the shipped kit and ignores the workspace's version entirely. This is the recovery path, and it is also the fastest triage question for any issue anyone files: does it still happen in safe mode.
 
 ## 7. What the library becomes
 
 With vendoring, sharing is copy-on-demand rather than live-linked, and that is the honest version anyway.
 
-- `~/.notebook/library/` remains, as a **source to copy from**, not a runtime layer. Your components and tools live there and travel between projects.
-- `nbk add component <name>` and `nbk add tool <name>` copy an entry into the current workspace, where it becomes local editable code like everything else.
-- `nbk promote <path> --to user` lifts something good from a workspace into your library, and `nbk lib package` still prepares an upstream contribution.
+- `~/.scrapbook/library/` remains, as a **source to copy from**, not a runtime layer. Your components and tools live there and travel between projects.
+- `sbk add component <name>` and `sbk add tool <name>` copy an entry into the current workspace, where it becomes local editable code like everything else.
+- `sbk promote <path> --to user` lifts something good from a workspace into your library, and `sbk lib package` still prepares an upstream contribution.
 - The three tiers survive intact. What changes is that they are stages in a copy pipeline rather than layers resolved at request time, which is simpler to reason about and much friendlier to agents, since the code always ends up local.
 
 ## 8. What this changes in the other specs
 
-- **`CUSTOMIZATION.md`** loses its spine. The layered resolver, the three levels, and `nbk eject` were all machinery for reaching code that lived somewhere else. With the kit vendored, roughly half of that document becomes unnecessary, which is a good outcome: the customization story is now "the code is in your project, edit it," plus config as the cheap path and hooks as a way to keep merges clean. It gets rewritten to the smaller model.
-- **`SPEC.md` 5.1 and 5.6** need correcting. Documents still link the design system rather than inlining it, but the path resolves inside the workspace, not to a shared engine. A change to `notebook/design-system/tokens.css` updates every document in that project, and nothing outside it.
+- **`CUSTOMIZATION.md`** loses its spine. The layered resolver, the three levels, and `sbk eject` were all machinery for reaching code that lived somewhere else. With the kit vendored, roughly half of that document becomes unnecessary, which is a good outcome: the customization story is now "the code is in your project, edit it," plus config as the cheap path and hooks as a way to keep merges clean. It gets rewritten to the smaller model.
+- **`SPEC.md` 5.1 and 5.6** need correcting. Documents still link the design system rather than inlining it, but the path resolves inside the workspace, not to a shared engine. A change to `scrapbook/design-system/tokens.css` updates every document in that project, and nothing outside it.
 - **`SPEC.md` build order.** The resolver phase becomes the vendoring and update phase, and it stays early for the same reason: retrofitting a version manifest and a merge path onto code that assumed fixed locations is a rewrite.
-- **`AGENT-INTERFACE.md`** gets simpler and stronger. `agent-brief` no longer has to teach an override mechanism. It says: the notebook's own code is at `./notebook`, here is the layout, edit it, and run `nbk update --check` before you assume a file is current.
+- **`AGENT-INTERFACE.md`** gets simpler and stronger. `agent-brief` no longer has to teach an override mechanism. It says: the scrapbook's own code is at `./scrapbook`, here is the layout, edit it, and run `sbk update --check` before you assume a file is current.
 
 ## 9. Costs that remain, with eyes open
 
 - **Four to six megabytes of vendored kit in each project's git repo,** and its diffs show up in client code review. Mitigation: keep the kit small, and gitignore only caches. Mostly this is a cosmetic complaint that is worth paying for the agent access.
 - **Merge conflicts are now a thing users experience.** Unavoidable in any vendored model. Mitigation: the modified-file tracking means conflicts only ever happen in files you actually edited, and `<file>.upstream` beside the file is enough for an agent to reconcile it for you. Worth noting that "ask your agent to merge this" is a genuinely good answer here in a way it would not have been five years ago.
-- **Divergence over time.** Six workspaces will drift apart. Mitigation: `nbk update --check` in `nbk doctor`, and accepting that some drift is the point. A client project frozen on last quarter's kit is working as designed.
-- **Two-part versioning.** The hub and the kit version separately, and support conversations have to establish both. Mitigation: `nbk doctor` prints both, and every JSON payload carries them.
+- **Divergence over time.** Six workspaces will drift apart. Mitigation: `sbk update --check` in `sbk doctor`, and accepting that some drift is the point. A client project frozen on last quarter's kit is working as designed.
+- **Two-part versioning.** The hub and the kit version separately, and support conversations have to establish both. Mitigation: `sbk doctor` prints both, and every JSON payload carries them.

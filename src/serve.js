@@ -73,7 +73,7 @@ function stream(res, file) {
  * ponytail: no caching headers, no etags, no compression, no range requests.
  * One person, one machine, localhost. Add them when a real page feels slow.
  */
-export function createNotebookServer(root) {
+export function createScrapbookServer(root) {
   const base = resolve(root);
   return createServer(async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');

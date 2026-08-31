@@ -1,4 +1,4 @@
-# Notebook, project instructions
+# Scrapbook, project instructions
 
 > Self-contained project. An agent pointed at this folder has everything it needs. Read `STATE.md` first, then this file.
 > This is Ishai's personal open-source project. It is NOT part of the Meridian workspace and inherits nothing from it.
@@ -33,10 +33,10 @@
 
 Do not relitigate these. They are in `docs/SPEC.md` section 11 with reasoning.
 
-- Node 20 or newer. Package `notebook-hub` on npm, binary `nbk`, repo `notebook`. MIT. No telemetry.
+- Node 20 or newer. Package `scrapbook-hub` on npm, binary `sbk`, repo `scrapbook`. MIT. No telemetry.
 - A document is a single HTML file. No database, no block model.
 - Kernel installs once; the kit is vendored into each workspace as editable source. Updates come back through a three-way merge that never clobbers local edits. See `docs/ARCHITECTURE.md`.
-- The CLI is the whole agent interface, vendor-neutral. `nbk agent-brief` is the discovery primitive. MCP later.
+- The CLI is the whole agent interface, vendor-neutral. `sbk agent-brief` is the discovery primitive. MCP later.
 - One hub with one workspace switcher, and that switcher is the only locked surface.
 - Ishai curates the app menu to start. Anyone can install an app from a URL without him.
 

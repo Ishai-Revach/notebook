@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createNotebookServer } from '../src/serve.js';
+import { createScrapbookServer } from '../src/serve.js';
 
 let server, origin, root, outside;
 
 before(async () => {
-  const box = await mkdtemp(join(tmpdir(), 'nbk-test-'));
+  const box = await mkdtemp(join(tmpdir(), 'sbk-test-'));
   root = join(box, 'workspace');
   outside = join(box, 'secrets');
   await mkdir(root);
@@ -21,7 +21,7 @@ before(async () => {
   await writeFile(join(outside, 'private.txt'), 'do not serve me');
   await symlink(join(outside, 'private.txt'), join(root, 'leak.txt'));
 
-  server = createNotebookServer(root);
+  server = createScrapbookServer(root);
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   origin = `http://127.0.0.1:${server.address().port}`;
 });

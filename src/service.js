@@ -6,9 +6,9 @@ import { join } from 'node:path';
 
 const run = promisify(execFile);
 
-export const LABEL = 'com.notebook.hub';
+export const LABEL = 'com.scrapbook.hub';
 export const PLIST = join(homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
-export const LOG = join(homedir(), 'Library', 'Logs', 'notebook.log');
+export const LOG = join(homedir(), 'Library', 'Logs', 'scrapbook.log');
 const DOMAIN = `gui/${process.getuid()}`;
 
 function xml(s) {
@@ -79,7 +79,7 @@ export async function stop() {
  * ponytail: "is it running" is answered by asking the port, not by scraping
  * launchctl. launchd reports "spawn scheduled" mid-restart, which is neither
  * yes nor no, and the only thing the answer is used for is whether the
- * notebook opens.
+ * scrapbook opens.
  */
 export async function status() {
   let installed;
