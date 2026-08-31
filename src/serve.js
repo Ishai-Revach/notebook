@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
 import { stat, readdir, realpath, writeFile, mkdir, rename } from 'node:fs/promises';
 import { join, resolve, extname, sep, posix } from 'node:path';
+import { buildNav } from './nav.js';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -129,6 +130,12 @@ export function createScrapbookServer(root) {
       return send(res, 204, '');
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
+
+    // The menu is read from the workspace on request, not built into a file,
+    // so a page that was written a second ago is already in it.
+    if (urlPath === '/_nav.json') {
+      return send(res, 200, JSON.stringify(await buildNav(base)), 'application/json; charset=utf-8');
+    }
 
     // Trust boundary: this serves a folder the user named, and nothing above it.
     // resolve() kills ../ traversal, realpath() kills symlinks pointing out.

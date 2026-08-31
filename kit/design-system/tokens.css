@@ -1,0 +1,205 @@
+/* Scrapbook design system, tokens (single source of truth).
+   Color palette copied verbatim from platform desktop-front/src/styles/brand.css.
+   Every scrapbook page links this file; no page redefines :root. */
+:root {
+  --color-yellow-50:      #ebd51933;
+  --color-yellow-100:     #ebd51980;
+  --color-yellow-200:     #ebd519;
+  --color-yellow-400:     #c68f18;
+
+  --color-egg-yolk-50:    #ffc14933;
+  --color-egg-yolk-100:   #ffc14880;
+  --color-egg-yolk-200:   #ffd280;
+  --color-egg-yolk-400:   #e89400;
+
+  --color-orange-50:      #ffefdf;
+  --color-orange-100:     #ffdabd;
+  --color-orange-400:     #ed5f00;
+  --color-orange-500:     #e12d00;
+  --color-orange-600:     #c42500;
+
+  --color-red-50:         #ff9d9833;
+  --color-red-100:        #ff9d9880;
+  --color-red-200:        #ff9c98;
+  --color-red-400:        #ec0000;
+
+  --color-pink-50:        #ffa1e333;
+  --color-pink-100:       #ffa1e380;
+  --color-pink-200:       #ffa1e3;
+  --color-pink-400:       #ff2db7;
+
+  --color-bordo-50:       #fa619b33;
+  --color-bordo-100:      #fa619b80;
+  --color-bordo-200:      #fa619b;
+  --color-bordo-400:      #dc1367;
+
+  --color-purple-50:      #cd94fa33;
+  --color-purple-100:     #cd94fa80;
+  --color-purple-200:     #cd94fa;
+  --color-purple-400:     #a64fee;
+
+  --color-dark-blue-50:   #887dff33;
+  --color-dark-blue-100:  #887dff80;
+  --color-dark-blue-200:  #887dff;
+  --color-dark-blue-400:  #5c29f3;
+
+  --color-blue-50:        #71aef933;
+  --color-blue-100:       #71aef980;
+  --color-blue-200:       #71aef9;
+  --color-blue-400:       #4b86fa;
+
+  --color-light-blue-50:  #8ae6ff33;
+  --color-light-blue-100: #8ae6ff80;
+  --color-light-blue-200: #8ae6ff;
+  --color-light-blue-400: #00a3e0;
+
+  --color-aquamarine-50:  #61e2d133;
+  --color-aquamarine-100: #61e2d180;
+  --color-aquamarine-200: #61e2d1;
+  --color-aquamarine-400: #01a5a8;
+
+  /* Semantic green (the "Approved" / positive-status family). Deliberately the
+     bright green; distinct from the deeper sage brand green (--sb-primary) so
+     "this is approved" never reads as "this is a link". */
+  --color-green-50:       #50f2a433;
+  --color-green-100:      #50f2a480;
+  --color-green-200:      #50f2a4;
+  --color-green-400:      #0dab4b;
+
+  --color-cream-50:       #fef8f1;
+  --color-cream-100:      #f8f1e7;
+  --color-cream-200:      #f1e7db;
+  --color-cream-300:      #e1d4c1;
+  --color-cream-400:      #c9b7a0;
+
+  --color-ink-50:         #cfc9c233;
+  --color-ink-100:        #cfc9c280;
+  --color-ink-200:        #cfc9c2;
+  --color-ink-300:        #ada8a3;
+  --color-ink-400:        #8c8781;
+  --color-ink-500:        #6d6761;
+  --color-ink-600:        #4b453f;
+  --color-ink-700:        #27231e;
+  --color-ink-800:        #16120e;
+  --color-ink-900:        #12100b;  /* warm near-black ink (not pure black), tuned toward the wordmark ink #25211b */
+
+  --color-white:          #fefcf9;  /* warm card white (cards/tables on the page) */
+  --sb-white:             #fdfcf9;  /* warm page white (page + sidebar surface); intentionally NOT pure #ffffff */
+
+  /* Brand primary accent, ORANGE #ed5f00 (same value as --color-orange-400).
+     Ishai's explicit pick 2026-07-20: the vivid orange itself, not a
+     darkened AA-safe step. Supersedes the earlier egg-yolk-hued dark step
+     (#996100, ~5:1 text contrast); Ishai chose the punchier color and
+     accepts the lower text contrast as a tradeoff. THE SINGLE interactive/
+     navigational accent: links, nav-active, focus rings, tab underlines,
+     primary controls, hover accents. Never used for non-interactive
+     emphasis, decoration, bullets, or status. Semantic status/stage colors
+     live in the hue families above (e.g. --color-green-400 is the bright
+     "Approved" green, kept apart; the egg-yolk family keeps its own
+     "In Revision" job, now unrelated to the brand accent).
+     --sb-primary-bright also points at #ed5f00, kept as a token so nothing
+     that already references it breaks; it is no longer a distinct value. */
+  --sb-primary:            #ed5f00;
+  --sb-primary-hover:      #c24e00;
+  --sb-primary-bright:     #ed5f00;
+  --sb-primary-tint:       #fdf1e8;
+  --sb-primary-tint-border:#fbdfcc;
+
+  /* Surface fills for framed elements (not the brand-orange tints above).
+     Two warm-cream steps, one deliberate contrast pair: emphasis reads
+     slightly deeper than frame so a highlighted panel still sits apart
+     from a plain one, without reaching for color. Borders are unaffected;
+     each container keeps its own border token. */
+  --surface-emphasis:      #f8f1e7;  /* framed areas WITH emphasis (featured tile) */
+  --surface-highlight:     #ffdabd;  /* featured/highlighted tile fill, Ishai 2026-07-20 */
+  --surface-frame:         #fef8f1;  /* general framed elements, no emphasis (entries, asides, disclosures, subflow panel) */
+
+  /* Very subtle card border, role tiles + JTBD cards (.sb-entry) and the
+     Stages panel (.subflow); barely-there definition against the same-tone
+     cream fill, not a strong outline. */
+  --card-outline:          #f1e7db;
+
+  /* Document markers, open question / friction / assumption. Distinct from
+     the brand accent and from status hues (e.g. the "Approved" green) so
+     all three read apart from each other at a glance. Consumed by the
+     .mark component in components.css, rendering filled two-tone Lucide
+     icons (circle-question-mark / octagon-alert / message-circle-more).
+     Ishai's icon set colors, literal hex (no matching --color-* step on
+     the ramp). --mark-assumption drives BOTH the .mark--assumption icon
+     (an assumption bullet in a friction list, or its count in
+     .disclosure-signals) AND, as a low-opacity tint below, the .assumption
+     inline-prose highlight, so the two forms read as the same color
+     language even though one is a glyph and the other a wash. */
+  --mark-question:    #9f54e8;
+  --mark-friction:     #d93119;
+  --mark-assumption:  #6084f4;
+
+  /* Assumption highlight, a highlighter-style wash behind assumption prose
+     that appears mid-sentence (why / before / with / next fields,
+     pull-quotes), where a .mark--assumption icon next to running text
+     would be noisier than a wash under it. A low-opacity tint of
+     --mark-assumption so it reads as "marked up in blue pen" over any of
+     the warm page/card surfaces, while keeping dark ink text fully
+     readable on top. Consumed by .assumption in components.css. */
+  --assumption-highlight: rgba(96, 132, 244, 0.14);
+
+  --font-body: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-heading: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-display: "Antonio", "Manrope", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-title: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* Type scale (single source of truth; components.css base elements consume
+     these so every page shares one set of title/body sizes). px noted for the
+     showcase. Font-size is intentionally NOT on the spacing grid. */
+  --text-h1: 56px;      /* page title, Fraunces */
+  --text-h2: 28px;      /* section heading, Manrope */
+  --text-h3: 19px;      /* sub-heading, Manrope */
+  --text-lede: 18px;    /* standfirst / intro line */
+  --text-body: 16px;    /* body copy (default) */
+  --text-small: 13.5px; /* secondary meta, captions */
+  --text-micro: 12px;   /* kickers, uppercase labels */
+
+  --lh-h1: 1.12;
+  --lh-h2: 1.2;
+  --lh-h3: 1.3;
+  --lh-body: 1.65;
+
+  /* Presentation scale (ADDITIVE, added 2026-07-27 for self-modify.html).
+     Nothing existing references these, so no page changes unless it opts in
+     via the .sb-present mode class. For a doc walked through in a room or on
+     a screenshare: --text-present-msg is the one big line that carries a
+     row's message, --text-present-lead the label above it, and
+     --text-present-body the supporting copy inside an opened row (still
+     smaller than the message, so the message stays the loudest thing). */
+  --text-present-msg:  27px;
+  --text-present-lead: 13px;
+  --text-present-body: 17px;
+  --lh-present-msg: 1.35;
+
+
+  /* Spacing scale. A deliberately small, named set: a 4/8 base (tight, snug)
+     for in-row rhythm, 12/16 (default, comfy) for the common block gaps, and
+     24/32 (wide, xwide) for section separation. Six steps is the whole
+     vocabulary on purpose: fewer choices keeps eight pages rhythmically
+     consistent. Consume by name; never hardcode px in page CSS. */
+  --space-tight: 4px;
+  --space-snug: 8px;
+  --space-default: 12px;
+  --space-comfy: 16px;
+  --space-wide: 24px;
+  --space-xwide: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+
+  --control-h: 44px;
+  --control-h-sm: 40px;
+}

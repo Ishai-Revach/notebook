@@ -113,3 +113,10 @@ test('refuses a body that is not JSON, so a tool cannot corrupt its own state', 
 test('refuses other methods', async () => {
   assert.equal((await fetch(`${origin}/tasks.html`, { method: 'DELETE' })).status, 405);
 });
+
+test('the menu is read from the workspace, and a page needs no registration', async () => {
+  const nav = await (await fetch(`${origin}/_nav.json`)).json();
+  const labels = nav.pages.map((p) => p.label);
+  assert.ok(labels.length > 0, 'a workspace of html files should produce a menu');
+  assert.ok(nav.pages.some((p) => p.href === 'tasks.html'));
+});

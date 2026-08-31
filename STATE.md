@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0, P1, P4 done
-**next move:** P2, see below
+**phase:** P0, P1, P2, P4 done
+**next move:** P3, authoring, see below
 
 ---
 
@@ -31,6 +31,9 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 | `src/serve.js` | The static server: workspace root, directory listing, path escape refused |
 | `src/service.js` | The launchd agent: install, remove, and report what is served |
 | `state/*.json` | Where a tool keeps its state, in the workspace, readable and editable by the agent |
+| `kit/` | The vendored source: design system, shell. Copied into each workspace and yours to edit |
+| `src/kit.js` | Vendoring, the three-way merge behind `sbk update`, `diff` and `restore` |
+| `src/nav.js` | Reads the workspace and builds the menu, on request, with no build step |
 | `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
 | `test/service.test.js` | Three cases: the served folder survives the plist round trip |
 
@@ -38,6 +41,11 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P2 shipped. The kit is vendored into `<workspace>/scrapbook/`, with the exact shipped copy kept beside it under `.pristine/`. Hashes would spot a local edit but cannot merge around one, and a three-way merge needs the original text.
+- **2026-08-31** , `sbk update` merges with `git merge-file`. Every machine that can run this has git, and writing another three-way merge would be a worse version of a solved problem.
+- **2026-08-31** , A conflicted file leaves `.pristine` untouched, so running update again retries the same merge instead of treating the conflict as resolved.
+- **2026-08-31** , The menu is generated per request from the pages themselves, not built into a file. A page declares itself with ordinary `<meta name="scrapbook:...">` tags, and a page with no tags still appears under its `<title>`. Writing an html file is the whole of adding a page.
+- **2026-08-31** , The kit uses the `sb-` class prefix. The reference notebook keeps its own `nb-` design system untouched, so the two never have to agree.
 - **2026-08-31** , P4 shipped. Tool state is a JSON file in the workspace at `state/<tool>.json`. The server accepts `PUT` there and nowhere else, only JSON, written to a temp file and renamed so a crash cannot truncate a board.
 - **2026-08-31** , A tool keeps localStorage as its offline copy and treats the file as the real one. A browser that already holds a board hands it up the first time it meets a workspace with no file yet; a browser that has never held one stays quiet, so seeded defaults can never overwrite a real board.
 - **2026-08-31** , **Renamed from Notebook to Scrapbook.** Ishai's call: the thing is his visual memory, a place everything goes and gets organised, and "notebook" was both generic and already Jupyter's word. npm `scrapbook-hub` (bare `scrapbook` is a dormant package), binary `sbk`, repo `scrapbook`. The known cost is that "scrap" leans toward keepsakes and away from a working surface, which the product's own writing has to carry instead of the name.
@@ -69,7 +77,7 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**P2, kernel/kit split, vendoring, `sbk update`, generated nav.** The structural one, and now the only thing between here and P3.
+**P3, authoring.** New page, write, format, text boxes, folders, menu reorder, with no agent involved. The day-one promise, and the real milestone.
 
 ### Known ceilings, not yet a problem
 

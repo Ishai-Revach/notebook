@@ -4,6 +4,7 @@ import { statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createScrapbookServer } from '../src/serve.js';
 import { start, stop, status, LOG } from '../src/service.js';
+import * as kit from '../src/kit.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PORT = 4321;
@@ -12,7 +13,13 @@ const USAGE = `usage:
   sbk serve [dir] [--port N]    serve a folder now, in this terminal
   sbk start [dir] [--port N]    serve it always, and after a restart
   sbk stop                      stop serving
-  sbk status                    what is being served, and where`;
+  sbk status                    what is being served, and where
+
+  sbk init [dir]                set a folder up as a workspace
+  sbk update [dir]              bring the kit up to date, keeping your edits
+  sbk update --check [dir]      is there anything to update
+  sbk diff <file> [dir]         what you changed in a kit file
+  sbk restore <file> [dir]      throw away your changes to a kit file`;
 
 function die(msg) {
   console.error(msg);
@@ -72,6 +79,44 @@ if (cmd === 'serve') {
   if (!s.installed) console.log('Not set up to run on its own. Use: sbk start <folder>');
   else if (!s.running) console.log(`Installed but not running. Check ${LOG}`);
   else console.log(`Serving ${s.root}\n  http://localhost:${s.port}/`);
+} else if (cmd === 'init') {
+  const { root } = parse(rest);
+  const { added, kept, seeded } = await kit.init(root);
+  console.log(`Workspace ready at ${root}`);
+  if (added.length) console.log(`  added ${added.length} file${added.length === 1 ? '' : 's'} under ${kit.KIT_DIR}/`);
+  if (kept.length) console.log(`  left ${kept.length} of your own file${kept.length === 1 ? '' : 's'} alone`);
+  if (seeded) console.log(`  wrote ${seeded} so there is something to open`);
+  console.log(`  next: sbk start ${root === process.cwd() ? '.' : root}`);
+} else if (cmd === 'update') {
+  const check = rest.includes('--check');
+  const dry = check || rest.includes('--dry-run');
+  const { root } = parse(rest.filter((a) => a !== '--check' && a !== '--dry-run'));
+  const have = await kit.installedVersion(root);
+  if (have === null) die(`sbk: ${root} is not a workspace yet. Run: sbk init ${root}`);
+  const changes = await kit.update(root, { dryRun: dry });
+  if (!changes.length) {
+    console.log(`Up to date (kit ${have}).`);
+  } else {
+    console.log(dry ? 'Would change:' : `Updated to kit ${await kit.kitVersion()}:`);
+    for (const c of changes) console.log(`  ${c.action.padEnd(22)} ${c.file}`);
+    const stuck = changes.filter((c) => c.action === 'merged with conflicts');
+    if (stuck.length) {
+      console.log(`\n${stuck.length} file${stuck.length === 1 ? '' : 's'} need a decision from you.`);
+      console.log('Open them, keep the lines you want, delete the markers, then run update again.');
+    }
+  }
+  if (check) process.exit(changes.length ? 1 : 0);
+} else if (cmd === 'diff' || cmd === 'restore') {
+  const [file, ...tail] = rest;
+  if (!file || file.startsWith('-')) die(USAGE);
+  const { root } = parse(tail);
+  if (cmd === 'diff') {
+    const out = await kit.diff(root, file);
+    console.log(out.trim() ? out : `No changes to ${file}.`);
+  } else {
+    const ok = await kit.restore(root, file);
+    console.log(ok ? `Restored ${file} to the shipped version.` : `sbk: no shipped version of ${file}`);
+  }
 } else {
   die(USAGE);
 }

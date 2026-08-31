@@ -1,0 +1,671 @@
+/* Scrapbook design system, shared base + shell + common components.
+   Every scrapbook page links this after tokens.css. Only genuinely shared,
+   identical-across-pages CSS lives here; page-unique CSS stays inline on the
+   page (after its scroll-boilerplate). Colors come from tokens.css only. */
+
+/* Reset */
+* { box-sizing: border-box; }
+
+/* Base document */
+body {
+  background: var(--sb-white);
+  color: var(--color-ink-700);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Page title, system-wide: Fraunces (serif), sentence case (not all-caps). */
+h1 {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: var(--text-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: -0.015em;
+  text-transform: none;
+  color: var(--color-ink-900);
+  margin: 0 0 var(--space-comfy);
+  max-width: 600px;
+}
+
+/* Section heading, system-wide: Manrope. */
+h2 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--text-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: -0.01em;
+  color: var(--color-ink-900);
+  margin: 40px 0 var(--space-snug);
+  padding-top: var(--space-comfy);
+}
+section:first-of-type h2:first-child,
+.lede + h2 { padding-top: 0; }
+
+/* Sub-heading, system-wide: Manrope. */
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: var(--text-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-ink-800);
+  margin: var(--space-wide) 0 10px;
+}
+
+/* Byline / kicker */
+.meta {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sb-primary);
+  margin: 0 0 40px;
+}
+.meta .dot {
+  margin: 0 var(--space-snug);
+  color: var(--color-ink-500);
+}
+
+/* Body text */
+p {
+  margin: 0 0 var(--space-comfy);
+  color: var(--color-ink-700);
+}
+
+/* Emphasis is weight + ink, never the brand orange. Orange is reserved for
+   interactive/navigational use only (links, nav-active, focus, tab underline). */
+strong { color: var(--color-ink-900); font-weight: 600; }
+
+/* Document header, location label. Order is kicker (.meta), .eyebrow, H1,
+   .subtitle, then content (optionally a .lede). The eyebrow names WHERE the
+   document lives (product/section); the H1 names WHAT the document is about.
+   Quieter than the H1, plainer than the orange kicker, sits directly above H1. */
+.eyebrow {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: var(--text-h3);
+  letter-spacing: 0.01em;
+  color: var(--color-ink-500);
+  margin: 0 0 var(--space-tight);
+}
+
+/* Document header, page-level subtitle. Order is kicker (.meta), .eyebrow, H1,
+   .subtitle, then content (optionally a .lede). Directly under H1, one line. */
+.subtitle {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: var(--text-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-ink-500);
+  margin: -8px 0 var(--space-comfy);
+}
+
+/* Standfirst / intro line under the title */
+.lede {
+  font-size: var(--text-lede);
+  line-height: 1.6;
+  color: var(--color-ink-500);
+  margin-bottom: var(--space-snug);
+}
+
+/* Reading column, system-wide. Pages consume this; no per-page .article. */
+.article {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 64px var(--space-wide) 96px;
+}
+@media (max-width: 560px) {
+  .article { padding: 72px var(--space-comfy) 72px; }
+}
+
+/* Inline links inside article content */
+.article a {
+  color: var(--sb-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+.article a:hover { color: var(--sb-primary-hover); }
+
+/* ============================================================
+   Container system, three deliberately-distinct box types.
+   Pick one, never invent a fourth. No side-stripe accents anywhere.
+     (a) .sb-aside      framed cream panel, static aside/callout
+     (b) .sb-entry      framed card, a structured entry
+     (c) .sb-disclosure collapsible framed box (native <details>)
+   All three use --surface-frame by default; --sb-entry--featured and other
+   deliberate highlights use the deeper --surface-emphasis instead.
+   ============================================================ */
+
+/* (a) Aside / callout. `.note` is a kept alias of the same treatment. */
+.sb-aside, .note {
+  background: var(--surface-frame);
+  border-radius: var(--radius-lg);
+  padding: var(--space-comfy) 20px;
+  margin: 0 0 var(--space-comfy);
+}
+.sb-aside > p:last-child, .note > p:last-child { margin-bottom: 0; }
+
+/* Aside label, a quiet kicker (ink, not the interactive orange). */
+.sb-aside__label {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-ink-500);
+  margin: 0 0 var(--space-snug);
+}
+
+/* Flag variant, a warm semantic-orange callout (e.g. a note to self). */
+.sb-aside--flag { background: var(--color-orange-50); }
+.sb-aside--flag .sb-aside__label { color: var(--color-orange-400); }
+
+/* (b) Structured entry card. Framed surface, larger radius, roomier padding,
+   so it reads as content-in-its-own-right rather than an aside. */
+.sb-entry {
+  background: var(--surface-frame);
+  border: 1px solid var(--card-outline);
+  border-radius: var(--radius-xl);
+  padding: var(--space-wide);
+  margin: 0 0 var(--space-comfy);
+}
+/* Featured entry, one deliberate highlight (a slightly deeper surface fill +
+   a second textual "featured" signal at the call site). Reusable. */
+.sb-entry--featured { background: var(--surface-highlight); }
+
+/* (c) Collapsible disclosure. Framed surface, native <details> with its own
+   marker as the affordance. For legends and secondary detail. */
+.sb-disclosure {
+  background: var(--surface-frame);
+  border-radius: var(--radius-lg);
+  padding: var(--space-comfy) 20px;
+  margin: 0 0 var(--space-wide);
+}
+.sb-disclosure > summary {
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-ink-500);
+}
+.sb-disclosure > summary:hover { color: var(--color-ink-700); }
+.sb-disclosure > summary:focus-visible {
+  outline: 2px solid var(--sb-primary); outline-offset: 2px; border-radius: var(--radius-sm);
+}
+.sb-disclosure[open] > summary { margin-bottom: var(--space-snug); }
+
+/* Disclosure signals, a triage glance on a collapsed summary: how many of each
+   marker the card holds, without opening it. Muted; counts authored statically.
+   Sits top-right on a summary, beside the chevron; see .disclosure-head. */
+.disclosure-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-default);
+  margin: var(--space-snug) 0 0;
+  font-size: var(--text-small);
+  color: var(--color-ink-500);
+}
+.disclosure-signals .sig { display: inline-flex; align-items: center; gap: 4px; }
+.disclosure-signals .sig b { font-weight: 600; color: var(--color-ink-600); }
+
+/* Document markers, open question / friction / assumption. Filled two-tone
+   Lucide icons (circle-question-mark / octagon-alert / message-circle-more),
+   referenced via <use> against a hidden <symbol> block placed once per page
+   right after <body> (see any page for the markup). Sized above text (1.2em,
+   min 16px) so the filled shapes' interior detail (dot/line strokes) stays
+   legible; still drops inline with a count (.sig) or into a sentence; body
+   color comes from the --mark-* tokens via currentColor on the symbols'
+   fill. The interior dot/line strokes stay literal white (part of the icon,
+   not tokenized) for contrast against the filled body. Replaces the old
+   emoji markers for open question and friction.
+
+   Two forms of "assumption" coexist by design, not a duplicate: .mark--
+   assumption is the discrete LIST marker, an assumption bullet inside a
+   card's friction list, and the matching count in that card's
+   .disclosure-signals, so it triages exactly like a friction/question
+   bullet. .assumption below is the INLINE PROSE highlight, for a run of
+   words or a full sentence inside a jtbd-row / pull-quote, where a glyph
+   next to running text would be noisier than a wash under it. Pick the
+   form by what the assumption IS: a list item -> icon, a phrase inside a
+   sentence -> highlight. */
+.mark {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  min-width: 16px;
+  min-height: 16px;
+  vertical-align: -0.2em;
+  flex-shrink: 0;
+}
+.mark--question { color: var(--mark-question); }
+.mark--friction { color: var(--mark-friction); }
+.mark--assumption { color: var(--mark-assumption); }
+
+/* Assumption highlight, a highlighter wash behind assumption prose. Wrap any
+   run of prose, from a couple words to a full sentence, in <span
+   class="assumption">. Use this for inline text (why / before / with /
+   next fields, pull-quotes), never for a friction-list bullet, that form
+   uses the .mark--assumption icon above instead. box-decoration-break keeps
+   the wash looking like one continuous highlighter stroke even when the
+   span wraps across lines. */
+.assumption {
+  background: var(--assumption-highlight);
+  padding: 0.02em 0.15em;
+  border-radius: 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Disclosure head row, pairs a summary's title with .disclosure-signals so
+   the signals sit top-right, beside the summary's chevron/marker, vertically
+   centered with the title line, in both the closed and open state (summary
+   content is always visible). The title is the flexible item: it shrinks
+   and wraps first, so a long title never collides with the signals cluster.
+   The consumer's own chevron/marker keeps its own reserved padding on the
+   summary; this row only lays out the title + signals inside it. */
+.disclosure-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-default);
+  margin: 0 0 var(--space-snug);
+}
+.disclosure-head > :first-child { flex: 1 1 auto; min-width: 0; margin: 0; }
+.disclosure-head .disclosure-signals { flex: 0 0 auto; margin: 0; }
+
+/* Banded statement, ONE fact given weight. An icon, a small label naming what
+   kind of fact it is ("Already settled", "The one that bites"), and one
+   paragraph set larger than body copy so a reader cannot scroll past it. Use
+   it for a decision that is closed, or for a trap that costs a day when it is
+   missed. Not a fourth container type: it holds a single statement, never
+   structured content, so it never competes with the three containers above.
+   Promoted to the design system after starting life as a page-local block. */
+.sb-statement {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 0 var(--space-comfy);
+  padding: var(--space-wide);
+  margin: 0 0 var(--space-wide);
+  border-radius: var(--radius-lg);
+  background: var(--color-cream-100);
+}
+.sb-statement > svg { width: 20px; height: 20px; color: var(--color-ink-500); margin-top: 5px; }
+.sb-statement__label {
+  grid-column: 2;
+  margin: 0 0 var(--space-tight);
+  font-family: var(--font-body);
+  font-size: var(--text-present-lead);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-ink-500);
+}
+.sb-statement__txt {
+  grid-column: 2;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--color-ink-800);
+}
+.sb-statement__txt + .sb-statement__txt { margin-top: var(--space-default); }
+.sb-statement__txt b { font-family: var(--font-heading); }
+
+/* Command / path, mono. `.sb-code` is the inline form (a file path, a variable
+   name, a flag, inside running prose); `.sb-cmd` is the block form, a line
+   meant to be copied, scrolling rather than wrapping so a long command stays
+   one readable line. Both sit on the warm cream step so they read as a
+   different material from prose without leaving the page's palette. */
+.sb-code, .sb-cmd {
+  font-family: var(--font-mono);
+  background: var(--color-cream-100);
+  color: var(--color-ink-800);
+}
+.sb-code {
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+}
+.sb-cmd {
+  display: block;
+  overflow-x: auto;
+  white-space: pre;
+  font-size: var(--text-small);
+  line-height: 1.5;
+  padding: var(--space-snug) var(--space-default);
+  border: 1px solid var(--color-cream-300);
+  border-radius: var(--radius-md);
+  margin: 0 0 var(--space-snug);
+}
+
+/* Tables */
+.table-scroll {
+  overflow-x: auto;
+  margin: 0 0 var(--space-comfy);
+  border: 1px solid var(--color-cream-300);
+  border-radius: var(--radius-xl);
+  background: var(--color-white);
+  box-shadow: 0 1px 3px rgba(22, 18, 14, 0.06);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 480px;
+  font-size: 15px;
+}
+
+th, td {
+  text-align: left;
+  padding: var(--space-default) var(--space-comfy);
+  border-bottom: 1px solid var(--color-cream-300);
+  vertical-align: top;
+}
+
+thead th {
+  font-family: var(--font-body);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-800);
+  background: var(--color-cream-100);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-cream-300);
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) { background: var(--color-cream-200); }
+
+/* Glossary term marker, inline. Bold + primary-orange text (this is the one
+   deliberate exception to "orange is interactive-only", since a term is a
+   focusable, hoverable trigger); no underline in any state. The definition
+   renders in a top-layer tooltip (see .term-tip below + shell.js), never a
+   CSS ::after bubble, so it can't be sliced by a container's edges or
+   stacking context. Definitions come from specs/GLOSSARY.md; keep them to
+   one short sentence. */
+.term {
+  font-weight: 600;
+  color: var(--sb-primary);
+  cursor: default;
+}
+.term:focus-visible {
+  outline: 2px solid var(--sb-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Glossary term tooltip, single shared element appended to <body> by
+   shell.js and repositioned per-term via getBoundingClientRect. Fixed
+   position + a high z-index put it in the top layer so it renders above
+   any ancestor's overflow/stacking context; the controller clamps it to
+   the viewport so it is never cut off. */
+.term-tip {
+  position: fixed;
+  max-width: 36ch;
+  white-space: normal;
+  text-align: left;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-small);
+  line-height: 1.5;
+  color: var(--color-ink-700);
+  background: var(--color-cream-50);
+  border: 1px solid var(--color-cream-300);
+  border-radius: var(--radius-lg);
+  padding: var(--space-snug) var(--space-default);
+  box-shadow: 0 6px 20px rgba(22, 18, 14, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+  z-index: 9999;
+}
+.term-tip.is-visible {
+  opacity: 1;
+}
+
+/* Scrapbook app-shell sidebar */
+.sb-side-toggle {
+  appearance: none;
+  position: fixed; top: var(--space-comfy); left: var(--space-comfy); z-index: 60;
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border: none; border-radius: 0; padding: 0;
+  background: none; color: var(--color-ink-700); cursor: pointer;
+  box-shadow: none;
+  transition: color 150ms ease, opacity 150ms ease;
+}
+.sb-side-toggle:hover { color: var(--sb-primary); background: none; opacity: 0.85; }
+.sb-side-toggle:focus-visible {
+  outline: 2px solid var(--sb-primary); outline-offset: 2px; border-radius: var(--radius-sm);
+}
+
+.sb-side {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 248px; z-index: 55;
+  background: var(--sb-white);
+  display: flex; flex-direction: column; overflow-y: auto;
+  padding: var(--space-comfy) var(--space-snug);
+  transition: transform 180ms ease;
+}
+.sb-side-header {
+  margin: 56px 0 var(--space-comfy) 0;
+  padding: var(--space-tight) var(--space-default);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-tight);
+}
+.sb-logo { display: block; width: 128px; height: auto; }
+/* A workspace with no wordmark still needs to say which one it is. */
+.sb-logo-text {
+  font-family: var(--font-heading); font-weight: 700; font-size: var(--text-small);
+  letter-spacing: 0.01em; color: var(--color-ink-900); text-transform: capitalize;
+}
+.sb-side nav { display: flex; flex-direction: column; gap: 2px; }
+.sb-side nav a, .sb-side nav .sb-nav-link {
+  display: block;
+  padding: var(--space-snug) var(--space-default);
+  padding-left: calc(var(--space-default) + var(--sb-nav-depth, 0) * 14px);
+  border-radius: var(--radius-md); color: var(--color-ink-500);
+  text-decoration: none; font-family: var(--font-body); font-size: 14px; font-weight: 400;
+}
+.sb-side nav a:hover { background: var(--color-cream-100); color: var(--color-ink-700); }
+.sb-side nav a[aria-current="page"] {
+  color: var(--sb-primary); font-weight: 600; background: none;
+}
+
+/* Nav groups, rendered from the tree in nav.js. Nesting is unlimited:
+   depth drives indentation through --sb-nav-depth, so a group inside a group
+   needs no extra CSS. */
+.sb-side nav .sb-nav-group { display: flex; flex-direction: column; gap: 2px; }
+.sb-side nav .sb-nav-children { display: flex; flex-direction: column; gap: 2px; }
+.sb-side nav .sb-nav-children[hidden] { display: none; }
+.sb-side nav .sb-nav-group-btn {
+  display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
+  padding: var(--space-snug) var(--space-default);
+  padding-left: calc(var(--space-default) + var(--sb-nav-depth, 0) * 14px);
+  border: none; background: none; cursor: pointer; border-radius: var(--radius-md);
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-400);
+}
+.sb-side nav .sb-nav-group-btn:hover { background: var(--color-cream-100); color: var(--color-ink-700); }
+.sb-side nav .sb-nav-caret { width: 8px; height: 8px; flex: none; transition: transform 140ms ease; }
+.sb-side nav .sb-nav-group-btn--closed .sb-nav-caret { transform: rotate(-90deg); }
+
+/* Live-arrangeable nav: everything drags, always. The + in the header adds
+   groups and dividers; hover reveals rename and remove affordances. */
+.sb-nav-add { position: relative; flex: none; }
+.sb-nav-add-btn {
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border: none; background: none; padding: 0; cursor: pointer;
+  color: var(--color-ink-400); border-radius: var(--radius-sm);
+}
+.sb-nav-add-btn svg { width: 12px; height: 12px; }
+.sb-nav-add-btn:hover { color: var(--sb-primary); background: var(--color-cream-100); }
+.sb-nav-add-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 70; min-width: 150px;
+  display: flex; flex-direction: column; padding: 4px;
+  background: var(--sb-white); border: 1px solid var(--color-cream-300);
+  border-radius: var(--radius-md); box-shadow: 0 6px 20px rgba(22,18,14,0.12);
+}
+.sb-nav-add-menu[hidden] { display: none; }
+.sb-nav-add-menu button {
+  text-align: left; border: none; background: none; cursor: pointer;
+  padding: 6px 8px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; color: var(--color-ink-600);
+}
+.sb-nav-add-menu button:hover { background: var(--color-cream-100); color: var(--color-ink-800); }
+
+.sb-side nav { position: relative; }
+.sb-side nav .sb-nav-link, .sb-side nav .sb-nav-group-btn { cursor: grab; }
+.sb-side nav .sb-nav-link:active, .sb-side nav .sb-nav-group-btn:active { cursor: grabbing; }
+.sb-side nav .sb-nav-label { flex: 1 1 auto; min-width: 0; outline: none; }
+.sb-side nav .sb-nav-label[contenteditable="true"] {
+  color: var(--color-ink-900); background: var(--sb-white);
+  box-shadow: 0 0 0 2px var(--sb-primary); border-radius: var(--radius-sm);
+  text-transform: none; letter-spacing: 0; cursor: text;
+}
+
+/* Row menu (groups and dividers): appears on hover, holds every action so
+   plain dragging never collides with renaming. */
+.sb-nav-menu { position: relative; flex: none; }
+.sb-nav-menu-btn {
+  width: 18px; height: 18px; display: grid; place-items: center; padding: 0;
+  border: none; background: none; cursor: pointer; color: var(--color-ink-300);
+  border-radius: var(--radius-sm); opacity: 0; transition: opacity 120ms ease;
+}
+.sb-nav-menu-btn svg { width: 12px; height: 4px; }
+.sb-side nav .sb-nav-group-btn:hover .sb-nav-menu-btn,
+.sb-side nav .sb-nav-divider-wrap:hover .sb-nav-menu-btn,
+.sb-nav-menu.is-open .sb-nav-menu-btn { opacity: 1; }
+.sb-nav-menu-btn:hover { color: var(--color-ink-800); background: var(--color-cream-200); }
+.sb-nav-menu-list {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 70; min-width: 178px;
+  display: flex; flex-direction: column; padding: 4px;
+  background: var(--sb-white); border: 1px solid var(--color-cream-300);
+  border-radius: var(--radius-md); box-shadow: 0 6px 20px rgba(22,18,14,0.12);
+}
+.sb-nav-menu-list[hidden] { display: none; }
+.sb-nav-menu-list button {
+  text-align: left; border: none; background: none; cursor: pointer;
+  padding: 6px 8px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; font-weight: 400;
+  letter-spacing: 0; text-transform: none; color: var(--color-ink-600);
+}
+.sb-nav-menu-list button:hover { background: var(--color-cream-100); color: var(--color-ink-800); }
+.sb-nav-menu-list button.is-danger:hover { color: var(--sb-primary); }
+
+.sb-side nav .sb-nav-divider-wrap {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px var(--space-default);
+  padding-left: calc(var(--space-default) + var(--sb-nav-depth, 0) * 14px);
+}
+.sb-side nav .sb-nav-divider { flex: 1 1 auto; height: 1px; background: var(--color-cream-300); }
+
+/* One insertion line, positioned between rows, not a pair of edge shadows. */
+.sb-side nav .sb-nav-dropline {
+  position: absolute; left: calc(var(--space-default) + var(--sb-nav-depth, 0) * 14px);
+  right: var(--space-default); height: 2px; border-radius: 1px;
+  background: var(--sb-primary); opacity: 0; pointer-events: none;
+  transition: top 90ms ease, opacity 90ms ease;
+}
+.sb-side nav .sb-nav-dropline.is-on { opacity: 1; }
+
+.sb-side nav .sb-nav-dragged { opacity: 0.4; }
+/* Dropping into a group highlights the whole group, header and children, in
+   the ordinary hover tint. */
+.sb-side nav .sb-nav-group--drop { background: var(--color-cream-100); border-radius: var(--radius-md); }
+.sb-side nav .sb-nav-empty {
+  font-family: var(--font-mono); font-size: 10px; color: var(--color-ink-300);
+  padding: 6px var(--space-default);
+  padding-left: calc(var(--space-default) + var(--sb-nav-depth, 0) * 14px);
+}
+.sb-side nav .sb-nav-empty[hidden] { display: none; }
+.sb-side nav .sb-nav-tail { min-height: 10px; margin: 0 var(--space-default); border-radius: var(--radius-md); }
+.sb-side nav.sb-nav--dragging .sb-nav-tail {
+  min-height: 34px; margin-top: 6px; border: 1px dashed var(--color-cream-300);
+}
+.sb-side nav .sb-nav-tail--drop { background: var(--color-cream-100); }
+
+.sb-scrim {
+  position: fixed; inset: 0; z-index: 54; background: rgba(22,18,14,0.35); display: none;
+}
+
+body { padding-left: 248px; transition: padding-left 180ms ease; }
+html.sb-collapsed .sb-side { transform: translateX(-100%); }
+html.sb-collapsed body { padding-left: 0; }
+
+@media (max-width: 760px) {
+  body { padding-left: 0 !important; }
+  .sb-side { transform: translateX(-100%); }
+  html:not(.sb-collapsed) .sb-side { transform: translateX(0); }
+  html:not(.sb-collapsed) .sb-scrim { display: block; }
+}
+
+@media print {
+  .sb-side, .sb-side-toggle, .sb-scrim { display: none; }
+  body { padding-left: 0; }
+}
+
+/* Shared-artifact bar, injected by shell.js on a page that has been published
+   somewhere else. Download, open the paired doc, copy the link, synced/stale. */
+.sb-artifact-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-comfy); }
+.sb-artifact-row .sb-artifact-bar { margin-bottom: 0; }
+.sb-artifact-bar {
+  display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-comfy);
+  margin-bottom: var(--space-snug);
+  font-family: var(--font-body); font-size: 12px;
+}
+.sb-artifact-ico { flex: none; }
+.sb-artifact-btn {
+  display: inline-flex; align-items: center; gap: var(--space-tight);
+  font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer;
+  padding: 0; border: none; background: none; color: var(--color-ink-400);
+  text-decoration: none;
+}
+.sb-artifact-btn:hover { color: var(--sb-primary); }
+.sb-artifact-status {
+  display: inline-flex; align-items: center; gap: var(--space-tight);
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.sb-artifact-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.sb-artifact-status--action { cursor: pointer; }
+.sb-artifact-status--action .sb-artifact-status-text { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+.sb-artifact-status--action:hover .sb-artifact-status-text { text-decoration: none; }
+.sb-artifact-bar[data-status="synced"] .sb-artifact-dot { background: var(--color-green-400); }
+.sb-artifact-bar[data-status="synced"] .sb-artifact-status { color: var(--color-green-400); }
+.sb-artifact-bar[data-status="stale"] .sb-artifact-dot { background: var(--color-orange-400); }
+.sb-artifact-bar[data-status="stale"] .sb-artifact-status { color: var(--color-orange-500); }
+@media print { .sb-artifact-bar { display: none; } }
+
+/* Document part-switcher. One document split across sibling pages (User roles /
+   Review lifecycle / Jobs to be done) shows this strip under the header on each
+   part. Same visual language as the callout tab labels, but these are LINKS
+   between pages, not in-page tabs; the current part carries aria-current. */
+.sb-parts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-wide);
+  margin: 0 0 var(--space-xwide);
+}
+.sb-parts a {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-500);
+  text-decoration: none;
+  padding: 0 0 var(--space-snug);
+  border-bottom: 2px solid transparent;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+.sb-parts a:hover { color: var(--color-ink-700); }
+.sb-parts a[aria-current="page"] { color: var(--sb-primary); border-color: var(--sb-primary); }
+.sb-parts a:focus-visible {
+  outline: 2px solid var(--sb-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+@media print { .sb-parts { display: none; } }
