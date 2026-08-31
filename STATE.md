@@ -1,8 +1,8 @@
 # State
 
-**last_updated:** 2026-07-26
-**phase:** definition complete, nothing built yet
-**next move:** P0, see below
+**last_updated:** 2026-08-31
+**phase:** P0 done, the kernel serves a workspace over http
+**next move:** P1, see below
 
 ---
 
@@ -14,7 +14,7 @@ This repo is that product. The client notebook stays where it is and becomes one
 
 ## What exists right now
 
-Specs only. No code.
+The specs, plus the first slice of the kernel: `nbk serve <folder>` puts a folder of documents on `http://localhost:4321`. Nothing is copied and nothing is rewritten.
 
 | File | What |
 |---|---|
@@ -25,11 +25,16 @@ Specs only. No code.
 | `docs/TOOLS.md` | The app contract, the SDK, authoring, the promotion path |
 | `docs/CUSTOMIZATION.md` | What lives in a project folder and how to change it |
 | `CLAUDE.md` | Project rules for any agent working here |
+| `bin/nbk.js` | The CLI. One command so far: `serve` |
+| `src/serve.js` | The static server: workspace root, directory listing, path escape refused |
+| `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
 
 ## Decisions log
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P0 shipped. The server has no caching, etags, compression or range requests on purpose. One person, one machine, localhost. Add them when a page actually feels slow.
+- **2026-08-31** , A workspace with no `index.html` gets a plain directory listing rather than a 404. The reference notebook has no front door and does not need one.
 - **2026-07-26** , Basic authoring (new page, write, format, text boxes, folders, menu reorder) moves to the front of the build order. It has to work with no agent involved. Was late in the plan; that was wrong.
 - **2026-07-26** , Each workspace carries a `GUIDELINES.md` house-style file the agent reads before authoring. A default, never a rule to argue back with.
 - **2026-07-26** , Ishai curates the app menu to start. Anyone can still install an app from a URL without him. Opening curation later is a policy change, not an architecture change.
@@ -53,11 +58,11 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**P0: serve the existing notebook.** Stand up the kernel as a plain local daemon and serve the client notebook at `~/Freelance-work/Meridian/platform-design/notebook/` over http, unchanged. Nothing about that content moves or changes. This proves the split with zero risk to work in progress.
+**P1: always on, and a Dock icon.** A launchd agent so the server survives a restart, plus install-as-app in Chrome so the notebook opens like an application rather than a tab. One afternoon in the estimate.
 
-Then **P1** (launchd agent plus install-as-app, so it is always on and has a Dock icon) and **P2** (kernel/kit split, vendoring, `nbk update`, generated nav). Full table in `docs/SPEC.md` section 9.
+Still true from P0: the client notebook content has not moved and will not. It is served in place.
 
-Ishai's own stated preference was to do the tool-storage change early because it improves his mornings immediately. That is P4 in the table. Worth asking him whether to pull it forward before P2, since it is a day of work and it is the change he will feel first.
+The open question from the last session stands. Ishai said file-backed tool storage (P4) is the change he would feel first, in his mornings. It sits behind the kernel/kit split (P2) and authoring (P3). Worth deciding whether to pull it forward.
 
 ## Session continuity
 
