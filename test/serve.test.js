@@ -81,3 +81,35 @@ test('refuses to escape the workspace through a symlink', async () => {
   const res = await fetch(`${origin}/leak.txt`);
   assert.equal(res.status, 403);
 });
+
+const put = (path, body) =>
+  fetch(`${origin}${path}`, { method: 'PUT', body: typeof body === 'string' ? body : JSON.stringify(body) });
+
+test('a tool can save its state and read it back', async () => {
+  assert.equal((await put('/state/tasks.json', { tasks: [{ title: 'ship it' }] })).status, 204);
+  const back = await (await fetch(`${origin}/state/tasks.json`)).json();
+  assert.deepEqual(back, { tasks: [{ title: 'ship it' }] });
+});
+
+test('state that was never saved reads as an empty object, not a 404', async () => {
+  const res = await fetch(`${origin}/state/never-written.json`);
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), {});
+});
+
+test('refuses to write anywhere but the state folder', async () => {
+  assert.equal((await put('/tasks.html', '{}')).status, 403);
+  assert.equal((await put('/state/../tasks.html', '{}')).status, 403);
+  assert.equal((await put('/state/notes.txt', '{}')).status, 403);
+  assert.equal((await put('/state/sub/dir.json', '{}')).status, 403);
+});
+
+test('refuses a body that is not JSON, so a tool cannot corrupt its own state', async () => {
+  assert.equal((await put('/state/tasks.json', 'not json at all')).status, 400);
+  const back = await (await fetch(`${origin}/state/tasks.json`)).json();
+  assert.deepEqual(back, { tasks: [{ title: 'ship it' }] });
+});
+
+test('refuses other methods', async () => {
+  assert.equal((await fetch(`${origin}/tasks.html`, { method: 'DELETE' })).status, 405);
+});

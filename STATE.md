@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0 and P1 done, the scrapbook is always on
-**next move:** P2 or P4, see below
+**phase:** P0, P1, P4 done
+**next move:** P2, see below
 
 ---
 
@@ -30,6 +30,7 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 | `bin/sbk.js` | The CLI. One command so far: `serve` |
 | `src/serve.js` | The static server: workspace root, directory listing, path escape refused |
 | `src/service.js` | The launchd agent: install, remove, and report what is served |
+| `state/*.json` | Where a tool keeps its state, in the workspace, readable and editable by the agent |
 | `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
 | `test/service.test.js` | Three cases: the served folder survives the plist round trip |
 
@@ -37,6 +38,8 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P4 shipped. Tool state is a JSON file in the workspace at `state/<tool>.json`. The server accepts `PUT` there and nowhere else, only JSON, written to a temp file and renamed so a crash cannot truncate a board.
+- **2026-08-31** , A tool keeps localStorage as its offline copy and treats the file as the real one. A browser that already holds a board hands it up the first time it meets a workspace with no file yet; a browser that has never held one stays quiet, so seeded defaults can never overwrite a real board.
 - **2026-08-31** , **Renamed from Notebook to Scrapbook.** Ishai's call: the thing is his visual memory, a place everything goes and gets organised, and "notebook" was both generic and already Jupyter's word. npm `scrapbook-hub` (bare `scrapbook` is a dormant package), binary `sbk`, repo `scrapbook`. The known cost is that "scrap" leans toward keepsakes and away from a working surface, which the product's own writing has to carry instead of the name.
 - **2026-08-31** , P1 shipped. Always-on is a launchd agent with `KeepAlive`, and the plist is the only config: the folder being served is remembered as an argument in it, so there is no second place for the answer to live.
 - **2026-08-31** , The Dock icon is Chrome's own "Install page as app", not a generated `.app` bundle. Chrome takes the icon from the page and gets the window right, which is the whole job, for no code.
@@ -66,17 +69,13 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-Ishai's call between two.
+**P2, kernel/kit split, vendoring, `sbk update`, generated nav.** The structural one, and now the only thing between here and P3.
 
-**P2, kernel/kit split, vendoring, `sbk update`, generated nav.** The structural one. It has to land before code assumes fixed locations, and retrofitting the merge path later is a rewrite.
+### Known ceilings, not yet a problem
 
-**P4, file-backed tool storage, tasks first.** The one he says he would feel first, in his mornings. Out of order, and worth it if the daily payoff matters more than build order.
+**Which browser migrates the board.** A tool with no state file yet is migrated by the first browser that opens it and already holds a board. If a second browser gets there first, its own copy wins and the other is masked, not lost, since localStorage still holds it. Deleting the state file and reloading the right browser recovers it. It stops mattering once every workspace has been opened once.
 
-P3 (authoring) is the real milestone either way and comes after whichever of these goes first.
-
-### Known ceiling, not yet a problem
-
-The launchd agent runs `bin/sbk.js` from wherever the repo is checked out when `sbk start` runs. Right now that is a worktree, so removing the worktree breaks always-on. It stops mattering the moment the package is installed globally, which is the natural thing to do once this is merged to `main`.
+**Where the agent is pointed.** The launchd agent runs `bin/sbk.js` from wherever the repo is checked out when `sbk start` runs. Right now that is a worktree, so removing the worktree breaks always-on. It stops mattering the moment the package is installed globally, which is the natural thing to do once this is merged to `main`.
 
 ## Session continuity
 

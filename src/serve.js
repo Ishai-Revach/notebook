@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
-import { stat, readdir, realpath } from 'node:fs/promises';
+import { stat, readdir, realpath, writeFile, mkdir, rename } from 'node:fs/promises';
 import { join, resolve, extname, sep, posix } from 'node:path';
 
 const TYPES = {
@@ -24,6 +24,27 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
   '.md': 'text/plain; charset=utf-8',
 };
+
+// Tools keep their state in state/*.json so the agent can read and edit it as
+// a file. That is the whole point of the folder, so it is the only place the
+// server accepts a write, and it only accepts JSON.
+const STATE_DIR = 'state';
+const MAX_STATE_BYTES = 5 * 1024 * 1024;
+
+function isStatePath(urlPath) {
+  return /^\/state\/[a-z0-9][a-z0-9-]*\.json$/.test(urlPath);
+}
+
+async function readBody(req, limit) {
+  let size = 0;
+  const chunks = [];
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > limit) throw new Error('too large');
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
 
 function send(res, code, body, type = 'text/plain; charset=utf-8') {
   res.writeHead(code, { 'content-type': type });
@@ -76,8 +97,6 @@ function stream(res, file) {
 export function createScrapbookServer(root) {
   const base = resolve(root);
   return createServer(async (req, res) => {
-    if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
-
     // Deliberately not new URL(): a request for "//" is scheme-relative there
     // and throws, which is a 400 for a link a browser can legitimately send.
     let urlPath;
@@ -86,6 +105,30 @@ export function createScrapbookServer(root) {
     } catch {
       return send(res, 400, 'Bad request');
     }
+
+    if (req.method === 'PUT') {
+      if (!isStatePath(urlPath)) return send(res, 403, `Only ${STATE_DIR}/<name>.json can be written`);
+      let body;
+      try {
+        body = await readBody(req, MAX_STATE_BYTES);
+      } catch {
+        return send(res, 413, 'Too large');
+      }
+      try {
+        JSON.parse(body);
+      } catch {
+        return send(res, 400, 'Not JSON');
+      }
+      const file = resolve(base, '.' + urlPath);
+      await mkdir(join(base, STATE_DIR), { recursive: true });
+      // Write and rename, so a crash mid-write cannot leave a half file where
+      // the tool's whole state used to be.
+      const tmp = `${file}.${process.pid}.tmp`;
+      await writeFile(tmp, body);
+      await rename(tmp, file);
+      return send(res, 204, '');
+    }
+    if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
 
     // Trust boundary: this serves a folder the user named, and nothing above it.
     // resolve() kills ../ traversal, realpath() kills symlinks pointing out.
@@ -97,6 +140,7 @@ export function createScrapbookServer(root) {
       real = await realpath(target);
       info = await stat(real);
     } catch {
+      if (isStatePath(urlPath)) return send(res, 200, '{}', 'application/json; charset=utf-8');
       return send(res, 404, 'Not found');
     }
     const realBase = await realpath(base);
