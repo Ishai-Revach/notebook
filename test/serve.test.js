@@ -147,3 +147,51 @@ test('the menu is read from the workspace, and a page needs no registration', as
   assert.ok(labels.length > 0, 'a workspace of html files should produce a menu');
   assert.ok(nav.pages.some((p) => p.href === 'tasks.html'));
 });
+
+test('one server can serve more than one workspace, told apart by the name in front', async () => {
+  const { request } = await import('node:http');
+  const other = await mkdtemp(join(tmpdir(), 'sbk-other-'));
+  await writeFile(join(other, 'only-here.html'), '<h1>Other workspace</h1>');
+
+  const multi = createScrapbookServer((req) => {
+    const label = String(req.headers.host ?? '').split(':')[0].split('.')[0];
+    if (label === 'other') return other;
+    if (label === 'localhost') return root;
+    return null;
+  });
+  await new Promise((r) => multi.listen(0, '127.0.0.1', r));
+  const port = multi.address().port;
+
+  /* node:http, not fetch: fetch treats Host as a forbidden header and drops it
+     without saying so, which makes every request look like it arrived for
+     127.0.0.1. A browser always sends it, so this is the honest client here. */
+  const get = (host, path) =>
+    new Promise((resolve, reject) => {
+      const req = request(
+        { host: '127.0.0.1', port, path, headers: { Host: `${host}:${port}` } },
+        (res) => {
+          let body = '';
+          res.on('data', (c) => (body += c));
+          res.on('end', () => resolve({ status: res.statusCode, body }));
+        },
+      );
+      req.on('error', reject);
+      req.end();
+    });
+
+  try {
+    assert.equal((await get('localhost', '/tasks.html')).status, 200);
+    assert.equal((await get('other', '/only-here.html')).status, 200);
+    // Each name sees only its own workspace.
+    assert.equal((await get('localhost', '/only-here.html')).status, 404);
+    assert.equal((await get('other', '/tasks.html')).status, 404);
+
+    // A name nobody has shows the switcher rather than the wrong scrapbook.
+    const stray = await get('typo', '/tasks.html');
+    assert.equal(stray.status, 404);
+    assert.match(stray.body, /Workspaces/);
+  } finally {
+    // Closed even when an assertion fails, or the open handle hangs the run.
+    multi.close();
+  }
+});

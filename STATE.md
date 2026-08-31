@@ -2,7 +2,7 @@
 
 **last_updated:** 2026-08-31
 **phase:** P0 through P9 done, first pass
-**next move:** review, see below
+**next move:** the editor, see below
 
 ---
 
@@ -46,6 +46,9 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , A1 of the desktop app plan shipped, ahead of the app itself. One port, and the name in front of the address picks the workspace: `notebook.localhost:4321`. Every browser already resolves anything ending in `.localhost` to this machine, so names cost nothing and need no password.
+- **2026-08-31** , A bare `localhost:4321` serves the first workspace rather than the switcher. The plan had old ports redirecting to new names; serving the default instead keeps every existing address working with no redirect machinery.
+- **2026-08-31** , An address whose name matches no workspace shows the switcher, not the default. Silently serving the wrong scrapbook to someone who mistyped is worse than a page saying which ones exist.
 - **2026-08-31** , P8 and P9 shipped, first pass. `scrapbook.json` carries the label and the accent colour, which is the whole cheap customisation path: anything it cannot express is a change to the kit, and the kit is sitting in the workspace.
 - **2026-08-31** , Every workspace is seeded with a task board, written fresh rather than ported. The reference notebook's board is 2,600 lines of client-specific merge logic; a plain list of title and status is the part that was actually day one.
 - **2026-08-31** , The board is seeded, not vendored. Once it is in a workspace it is that workspace's page and no update reaches back into it. The cost is that improvements do not reach existing workspaces, which is the same trade every seeded page makes.
@@ -101,9 +104,9 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**Review.** Everything in the build order has had a first pass. What is worth doing next comes out of using it for a week, not out of the table.
+**The editor.** `docs/PLUGINS.md` has the plan: blocks as markup, a slash menu, plugins. B1 to B4 is the word processor and it is the piece everything else waits on.
 
-Standing gaps are listed below. The two that would come first: deleting a page, and hooks, which were skipped because there are no events to hang them on yet.
+The rest of the desktop app (A2 onward in `docs/DESKTOP-APP.md`) is ready to start whenever it is wanted; A1 is done.
 
 ### Known ceilings, not yet a problem
 

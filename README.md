@@ -20,6 +20,15 @@ That is the whole setup. `init` puts everything it needs inside that folder, `st
 
 Repeat `init` for every project. Client work, home stuff, whatever. Each one is separate and cannot see the others, and the workspace name in the sidebar switches between them.
 
+Each one gets its own address, from its name:
+
+```
+http://notebook.localhost:4321/
+http://home.localhost:4321/
+```
+
+Those work in any browser with no setup: anything ending in `.localhost` already means this machine. A plain `http://localhost:4321/` opens the first one.
+
 Already have a folder of pages you like? `sbk add ~/that/folder` serves it exactly as it is and adds nothing to it.
 
 ### The commands

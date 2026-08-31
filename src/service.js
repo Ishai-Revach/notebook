@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { list } from './workspaces.js';
+import { list, PORT, addressOf } from './workspaces.js';
 
 const run = promisify(execFile);
 
@@ -100,7 +100,7 @@ export async function status() {
   const checked = await Promise.all(
     workspaces.map(async (w) => ({
       ...w,
-      up: await fetch(`http://localhost:${w.port}/`).then(() => true).catch(() => false),
+      up: await fetch(addressOf(w, PORT)).then(() => true).catch(() => false),
     })),
   );
   return { installed: true, running: checked.some((w) => w.up), workspaces: checked };

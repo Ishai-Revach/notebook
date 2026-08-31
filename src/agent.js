@@ -32,8 +32,8 @@ const exists = (f) => stat(f).then(() => true).catch(() => false);
  * it only ever has to say "run this", and this always describes what is true
  * of the version installed.
  */
-export function agentBrief(root, { port } = {}) {
-  const url = port ? `http://localhost:${port}/` : 'http://localhost:4321/';
+export function agentBrief(root, { address } = {}) {
+  const url = address ?? 'http://localhost:4321/';
   return `# Scrapbook, agent contract
 
 Workspace: ${root}

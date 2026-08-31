@@ -4,7 +4,7 @@ import { stat, readdir, realpath, writeFile, mkdir, rename } from 'node:fs/promi
 import { dirname, join, resolve, extname, sep, posix } from 'node:path';
 import { buildNav } from './nav.js';
 import { pageTemplate } from './kit.js';
-import { list as listWorkspaces } from './workspaces.js';
+import { list as listWorkspaces, addressOf } from './workspaces.js';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -105,12 +105,12 @@ ${rows}
 </ul></body></html>`;
 }
 
-async function hubPage(current) {
+async function hubPage(current, port) {
   const workspaces = await listWorkspaces();
   const rows = workspaces
     .map((w) => {
       const here = w.path === current;
-      return `<li${here ? ' class="here"' : ''}><a href="http://localhost:${w.port}/">` +
+      return `<li${here ? ' class="here"' : ''}><a href="${addressOf(w, port)}">` +
         `<strong>${escapeHtml(w.label)}</strong><span>${escapeHtml(w.path)}</span></a>` +
         `${here ? '<em>open</em>' : ''}</li>`;
     })
@@ -145,12 +145,24 @@ function stream(res, file) {
 
 /**
  * Serve a workspace folder of static documents, unchanged.
+ *
+ * `where` is either one folder, or a function given the request that returns
+ * the folder to serve. The second form is how one port serves every workspace:
+ * the name in front of the address picks the folder, and nothing else in here
+ * has to know that more than one workspace exists.
  * ponytail: no caching headers, no etags, no compression, no range requests.
  * One person, one machine, localhost. Add them when a real page feels slow.
  */
-export function createScrapbookServer(root) {
-  const base = resolve(root);
+export function createScrapbookServer(where, { port } = {}) {
+  const resolveBase = typeof where === 'function' ? where : () => where;
   return createServer(async (req, res) => {
+    const picked = await resolveBase(req);
+    if (!picked) {
+      // A name nobody recognises. Showing the switcher beats silently serving
+      // the wrong scrapbook to someone who mistyped one.
+      return send(res, 404, await hubPage(null, port ?? 4321), 'text/html; charset=utf-8');
+    }
+    const base = resolve(picked);
     // Deliberately not new URL(): a request for "//" is scheme-relative there
     // and throws, which is a 400 for a link a browser can legitimately send.
     let urlPath;
@@ -214,7 +226,7 @@ export function createScrapbookServer(root) {
        workspace that has been edited into a broken state cannot take away
        the way out of it. This is the one surface a workspace cannot change. */
     if (urlPath === '/_hub') {
-      return send(res, 200, await hubPage(base), 'text/html; charset=utf-8');
+      return send(res, 200, await hubPage(base, port ?? 4321), 'text/html; charset=utf-8');
     }
 
     // The menu is read from the workspace on request, not built into a file,

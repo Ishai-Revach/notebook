@@ -152,7 +152,7 @@ Each of these is separately useful and separately verifiable.
 
 | | What | Why here |
 |---|---|---|
-| **A1** | One port, hostname routing, `.localhost` addresses, `slug` in the registry | Independent of the app, better the day it lands, and it is the answer to the address question |
+| **A1** | One port, hostname routing, `.localhost` addresses, `slug` in the registry | **Done 2026-08-31.** Independent of the app, better the day it lands, and it is the answer to the address question |
 | **A2** | `sbk move`, `sbk relocate`, `sbk rename` in the kernel | The app calls these; the CLI should have them first and they are testable without a window |
 | **A3** | The Electron control panel: the list, the actions, in-process server, quit stops serving, attach if already running | The thing itself |
 | **A4** | A real `.app` in Applications, with a Dock icon and a name | What makes it feel installed rather than run |
@@ -168,8 +168,10 @@ scheme that is staying rather than the one being replaced.
   `home`. The slug is what appears in the address, and Rename changes it.
 - One server on 4321. Every request is dispatched on the `Host` header's first
   label. An unknown host, or a bare `localhost`, serves the switcher.
-- Existing per-workspace ports keep answering for a while and redirect to the
-  new address, so nothing bookmarked breaks on the day it changes.
+- **Changed while building:** rather than keeping the old per-workspace ports
+  alive to redirect, a bare `localhost:4321` serves the first workspace. That
+  keeps every existing address working with no redirect machinery at all, and
+  the switcher stays where it already was, at `/_hub`.
 - The switcher's links become names instead of ports.
 
 ## 7. Risks and costs, with eyes open

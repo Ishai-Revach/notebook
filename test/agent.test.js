@@ -8,9 +8,9 @@ import { agentBrief, seedBrief, writePointers } from '../src/agent.js';
 const box = () => mkdtemp(join(tmpdir(), 'sbk-agent-'));
 
 test('the brief describes the workspace it was asked about', () => {
-  const brief = agentBrief('/somewhere/notes', { port: 4400 });
+  const brief = agentBrief('/somewhere/notes', { address: 'http://notes.localhost:4321/' });
   assert.match(brief, /\/somewhere\/notes/);
-  assert.match(brief, /http:\/\/localhost:4400\//);
+  assert.match(brief, /http:\/\/notes\.localhost:4321\//);
   assert.match(brief, /scrapbook:group/);
 });
 

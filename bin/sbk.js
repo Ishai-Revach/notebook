@@ -79,25 +79,26 @@ if (cmd === 'serve') {
 } else if (cmd === 'serve-all') {
   const all = await workspaces.list();
   if (!all.length) die('sbk: no workspaces registered. Run: sbk init <folder>');
-  for (const w of all) {
-    const server = createScrapbookServer(w.path);
-    server.on('error', (err) => console.error(`sbk: ${w.label}: ${err.message}`));
-    server.listen(w.port, '127.0.0.1', () => {
-      console.log(`${w.label} -> http://localhost:${w.port}/  (${w.path})`);
-    });
-  }
+  const p = rest.indexOf('--port');
+  const port = p === -1 ? workspaces.PORT : Number(rest[p + 1]);
+  // One server, every workspace. The name in front of the address picks which.
+  const server = createScrapbookServer((req) => workspaces.byHost(req.headers.host).then((w) => w && w.path), { port });
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') die(`sbk: port ${port} is busy`);
+    die(`sbk: ${err.message}`);
+  });
+  server.listen(port, '127.0.0.1', () => {
+    for (const w of all) console.log(`${w.label.padEnd(20)} ${workspaces.addressOf(w, port)}`);
+  });
 } else if (cmd === 'start') {
-  // Registering first means `sbk start <new folder>` just works, and the
-  // agent that comes up serves every workspace, not only the last one named.
   const named = rest.some((a) => !a.startsWith('-') && rest[rest.indexOf(a) - 1] !== '--port');
   const { root } = parse(rest);
-  const entry = await (named ? workspaces.register(root) : Promise.resolve(null));
+  if (named) await workspaces.register(root);
   const all = await workspaces.list();
   if (!all.length) die('sbk: no workspaces yet. Run: sbk init <folder>');
   await start({ entry: join(HERE, 'sbk.js') }).catch((e) => die(`sbk: ${e.message}`));
 
-  const first = entry ?? all[0];
-  const url = `http://localhost:${first.port}/`;
+  const url = `http://localhost:${workspaces.PORT}/`;
   let up = false;
   for (let i = 0; i < 20 && !up; i++) {
     up = await fetch(url).then(() => true).catch(() => false);
@@ -107,8 +108,9 @@ if (cmd === 'serve') {
     console.log(`sbk: started, but nothing answered on ${url}`);
     console.log(`  check ${LOG}`);
   } else {
-    for (const w of all) console.log(`${w.label.padEnd(20)} http://localhost:${w.port}/`);
-    console.log(`\nSwitch between them at ${url}_hub`);
+    for (const w of all) console.log(`${w.label.padEnd(20)} ${workspaces.addressOf(w)}`);
+    console.log(`\n${all[0].label} also answers at ${url}`);
+    console.log(`Switch between them at ${url}_hub`);
   }
 } else if (cmd === 'stop') {
   await stop();
@@ -121,7 +123,7 @@ if (cmd === 'serve') {
     console.log('Running, but no workspaces registered. Use: sbk init <folder>');
   } else {
     for (const w of s.workspaces) {
-      console.log(`${w.up ? 'up  ' : 'down'}  ${w.label.padEnd(20)} http://localhost:${w.port}/  ${w.path}`);
+      console.log(`${w.up ? 'up  ' : 'down'}  ${w.label.padEnd(18)} ${workspaces.addressOf(w).padEnd(38)} ${w.path}`);
     }
     if (!s.running) console.log(`\nNothing is answering. Check ${LOG}`);
   }
@@ -144,7 +146,7 @@ if (cmd === 'serve') {
   const { root } = parse(rest);
   const entry = await workspaces.register(root);
   console.log(`Serving ${root} as it is`);
-  console.log(`  http://localhost:${entry.port}/`);
+  console.log(`  ${workspaces.addressOf(entry)}`);
   console.log('  nothing was added to it. Use sbk init if you want the kit.');
 } else if (cmd === 'update') {
   const check = rest.includes('--check');
@@ -179,11 +181,11 @@ if (cmd === 'serve') {
 } else if (cmd === 'agent-brief') {
   const { root } = parse(rest);
   const known = (await workspaces.list()).find((w) => w.path === root);
-  console.log(agentBrief(root, { port: known ? known.port : null }));
+  console.log(agentBrief(root, { address: known ? workspaces.addressOf(known) : null }));
 } else if (cmd === 'workspaces') {
   const all = await workspaces.list();
   if (!all.length) console.log('No workspaces yet. Use: sbk init <folder>');
-  for (const w of all) console.log(`  ${w.label.padEnd(18)} :${w.port}  ${w.path}`);
+  for (const w of all) console.log(`  ${w.label.padEnd(18)} ${workspaces.addressOf(w).padEnd(38)} ${w.path}`);
 } else if (cmd === 'install') {
   const [url, ...tail] = rest;
   if (!url || url.startsWith('-')) die(USAGE);
