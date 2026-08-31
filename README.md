@@ -33,6 +33,7 @@ Already have a folder of pages you like? `sbk add ~/that/folder` serves it exact
 | `sbk status` | what is being served, and where |
 | `sbk share <page>` | write one file you can send anyone |
 | `sbk update` | bring the kit up to date, keeping your edits |
+| `sbk install <url>` | add a page someone else wrote |
 | `sbk agent-brief` | the contract, for an agent to read |
 
 ## What works without an agent
@@ -45,7 +46,11 @@ Press Edit, and:
 - Arrange pages into folders and reorder the menu.
 - Share a page as a single file you can send anyone.
 
-Not yet: a task board that comes with it, and deleting a page. Both are on the way.
+Every workspace comes with a task board. It keeps its tasks in a plain file, so
+"put this week's tasks on a page called Today" is a sentence, not a job.
+
+Not yet: deleting a page. That one should ask properly rather than sit in a menu
+next to Rename.
 
 ## What you ask the agent for
 

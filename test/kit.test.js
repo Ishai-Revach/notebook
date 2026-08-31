@@ -17,8 +17,17 @@ beforeEach(async () => {
 
 test('init vendors the kit and leaves something to open', async () => {
   const { seeded } = await kit.init(await mkdtemp(join(tmpdir(), 'sbk-fresh-')));
-  assert.equal(seeded, 'index.html');
+  assert.equal(seeded, 'index.html and tasks.html');
   assert.equal(await read(live()), await read(pristine()));
+});
+
+test('the board is seeded, not vendored, so no update reaches back into it', async () => {
+  const fresh = await mkdtemp(join(tmpdir(), 'sbk-board-'));
+  await kit.init(fresh);
+  await writeFile(join(fresh, 'tasks.html'), 'my board now');
+  const changes = await kit.update(fresh);
+  assert.ok(!changes.some((c) => c.file.includes('tasks.html')));
+  assert.equal(await read(join(fresh, 'tasks.html')), 'my board now');
 });
 
 test('init never overwrites a file that is already there', async () => {
@@ -75,4 +84,27 @@ test('restore throws away your changes, diff shows them first', async () => {
   assert.match(await kit.diff(root, 'shell.js'), /gone wrong/);
   assert.equal(await kit.restore(root, 'shell.js'), true);
   assert.equal(await read(live()), await read(pristine()));
+});
+
+test('installing refuses anything but https, so what arrives is what was sent', async () => {
+  await assert.rejects(() => kit.install(root, 'http://example.com/app.html'), /only https/);
+  await assert.rejects(() => kit.install(root, 'not a url'), /not a url/);
+});
+
+test('installing takes a page from a url and names it from its title', async () => {
+  const { createServer } = await import('node:http');
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<!doctype html><html><head><title>Timer App</title></head><body>hi</body></html>');
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const url = `http://127.0.0.1:${server.address().port}/anything`;
+
+  const made = await kit.install(root, url);
+  assert.equal(made.file, 'timer-app.html');
+  assert.match(await read(join(root, 'timer-app.html')), /Timer App/);
+
+  // Twice is a refusal, not a silent overwrite of whatever is there now.
+  await assert.rejects(() => kit.install(root, url), /already here/);
+  server.close();
 });

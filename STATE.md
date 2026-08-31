@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0 through P7 done
-**next move:** P8 and P9, see below
+**phase:** P0 through P9 done, first pass
+**next move:** review, see below
 
 ---
 
@@ -38,6 +38,7 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 | `kit/edit.js` | Authoring: edit mode, the toolbar, text boxes, autosave |
 | `src/agent.js` | `sbk agent-brief`, the pointer blocks, the seeded SCRAPBOOK.md |
 | `src/workspaces.js` | The registry: which folders are workspaces, and on which port |
+| `kit/apps/tasks.html` | The task board every workspace is seeded with |
 | `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
 | `test/service.test.js` | Three cases: the served folder survives the plist round trip |
 
@@ -45,6 +46,11 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P8 and P9 shipped, first pass. `scrapbook.json` carries the label and the accent colour, which is the whole cheap customisation path: anything it cannot express is a change to the kit, and the kit is sitting in the workspace.
+- **2026-08-31** , Every workspace is seeded with a task board, written fresh rather than ported. The reference notebook's board is 2,600 lines of client-specific merge logic; a plain list of title and status is the part that was actually day one.
+- **2026-08-31** , The board is seeded, not vendored. Once it is in a workspace it is that workspace's page and no update reaches back into it. The cost is that improvements do not reach existing workspaces, which is the same trade every seeded page makes.
+- **2026-08-31** , A page can declare `scrapbook:app` and the authoring layer leaves it alone. Turning an app into editable prose would break the controls someone came to the page for.
+- **2026-08-31** , `sbk install <url>` is https only, refuses to overwrite, and says plainly what an installed page can do. An installed page runs on the workspace's origin, so it can read the tool state and save over documents. There is no sandbox that leaves it able to be a useful tool, so the trust is made explicit instead of pretended away.
 - **2026-08-31** , P7 shipped. README matches what the thing does, CONTRIBUTING says what the project cares about, and CI runs the tests on Node 20, 22 and 24.
 - **2026-08-31** , The no-dashes rule was never actually being enforced. `grep $'\u2014\|\u2013\|\u2192'` returns nothing on macOS, because BSD grep does not understand `\|` alternation, so every check since the rule was written passed no matter what was in the repo. It needs `-E`. The repo turned out to be clean anyway. CI now runs the working form, so it cannot go quiet again.
 - **2026-08-31** , P5 and P6 shipped. `sbk agent-brief` prints the contract rather than storing it, so a pointer left in a project only ever has to say "run this" and can never go stale.
@@ -95,13 +101,15 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**P7, going public.** README that matches what the thing now does, CONTRIBUTING, CI running the tests, and the repo already exists and is already public at `Ishai-Revach/scrapbook`.
+**Review.** Everything in the build order has had a first pass. What is worth doing next comes out of using it for a week, not out of the table.
 
-Then P8 (config and hooks) and P9 (the app menu, which is where a kit task board belongs).
+Standing gaps are listed below. The two that would come first: deleting a page, and hooks, which were skipped because there are no events to hang them on yet.
 
 ### Known ceilings, not yet a problem
 
-**The task board is not in the kit yet.** Day one says a workspace comes with one. What exists is the storage (P4) and the reference notebook's own board wired to it. Porting a 2,600 line board is its own piece of work, and it belongs with P9, where tools become installable things rather than files copied by hand.
+**No hooks, no settings page.** P8 called for both. `scrapbook.json` covers the settings a person actually changes, and hooks were skipped because nothing yet fires an event worth hanging one on. Adding them before there is a use is guessing at the shape.
+
+**The app menu is a command, not a menu.** `sbk install <url>` works. There is no curated list, because there is nothing yet to curate.
 
 **No delete.** A page can be made, renamed, moved and shared, but not deleted from the menu. Deleting a document is the one authoring action that loses work, and it should ask properly rather than sit in a row menu next to Rename.
 

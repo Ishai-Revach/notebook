@@ -316,7 +316,13 @@
     document.addEventListener('click', closeMenus);
     fetch('/_nav.json')
       .then(function (r) { return r.json(); })
-      .then(function (nav) { renderHeader(nav); render(host, nav); })
+      .then(function (nav) {
+        /* One line of theming without touching the design system: the accent
+           is a variable every component already reads. */
+        if (nav.accent) root.style.setProperty('--sb-primary', nav.accent);
+        renderHeader(nav);
+        render(host, nav);
+      })
       .catch(function () {
         /* Opened straight off disk, with no server to ask. The page itself
            still reads fine, so say so quietly rather than breaking. */

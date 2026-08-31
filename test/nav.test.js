@@ -62,3 +62,19 @@ test('the kit and the state folder are not pages', async () => {
   assert.ok(!JSON.stringify(nav).includes('scrapbook/'));
   assert.ok(!JSON.stringify(nav).includes('state/'));
 });
+
+test('a workspace can be renamed and re-accented without touching the kit', async () => {
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(join(root, 'scrapbook.json'), JSON.stringify({ label: 'Home Notes', accent: '#336699' }));
+  const nav = await buildNav(root);
+  assert.equal(nav.workspace, 'Home Notes');
+  assert.equal(nav.accent, '#336699');
+});
+
+test('a broken config file is ignored rather than fatal', async () => {
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(join(root, 'scrapbook.json'), '{ not json');
+  const nav = await buildNav(root);
+  assert.ok(nav.workspace, 'the folder name should still come through');
+  assert.equal(nav.accent, null);
+});

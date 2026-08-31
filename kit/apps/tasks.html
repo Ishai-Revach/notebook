@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tasks</title>
+<meta name="scrapbook:label" content="Tasks">
+<meta name="scrapbook:order" content="1">
+<meta name="scrapbook:app" content="true">
+<link rel="stylesheet" href="/scrapbook/design-system/tokens.css">
+<link rel="stylesheet" href="/scrapbook/design-system/components.css">
+<link rel="stylesheet" href="/scrapbook/design-system/edit.css">
+<style>
+  html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+  #addForm { margin: 0; }
+  .add { width: 100%; box-sizing: border-box; padding: 12px 14px; margin-bottom: var(--space-comfy);
+         border: 1px solid var(--color-cream-300); border-radius: 8px;
+         background: var(--color-cream-100); color: var(--color-ink-900);
+         font-family: var(--font-body); font-size: var(--text-body); }
+  .add:focus { outline: none; border-color: var(--sb-primary); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .task { display: flex; align-items: center; gap: 12px; padding: 11px 4px;
+          border-bottom: 1px solid var(--color-cream-300); }
+  .task button { border: 0; background: none; cursor: pointer; font: inherit; }
+  .dot { width: 15px; height: 15px; flex: none; border-radius: 50%;
+         border: 1.5px solid var(--color-ink-500); padding: 0; }
+  .dot[data-status="doing"] { border-color: var(--sb-primary);
+         background: radial-gradient(var(--sb-primary) 0 42%, transparent 44%); }
+  .dot[data-status="done"] { border-color: var(--sb-primary); background: var(--sb-primary); }
+  .title { flex: 1; min-width: 0; text-align: left; color: var(--color-ink-900); }
+  .task[data-status="done"] .title { color: var(--color-ink-500); text-decoration: line-through; }
+  .kill { opacity: 0; color: var(--color-ink-500); padding: 0 4px; }
+  .task:hover .kill { opacity: 1; }
+  .kill:hover { color: var(--sb-primary); }
+  .empty { color: var(--color-ink-500); padding: var(--space-comfy) 0; }
+  .count { color: var(--color-ink-500); font-size: var(--text-small); margin-top: var(--space-comfy); }
+</style>
+</head>
+<body>
+<article class="article">
+  <h1>Tasks</h1>
+  <form id="addForm"><input class="add" id="add" placeholder="Add a task, then Enter" autocomplete="off"></form>
+  <ul class="list" id="list"></ul>
+  <p class="count" id="count"></p>
+</article>
+<script>
+/* The board is a view of state/tasks.json and nothing else. Anything that can
+   write that file, an agent included, is editing the same board you are.
+   ponytail: no drag ordering, no tags, no due dates. Add them when the plain
+   list is the thing getting in the way. */
+(function () {
+  var URL = 'state/tasks.json';
+  var STATUSES = ['todo', 'doing', 'done'];
+  var store = { tasks: [] };
+  var list = document.getElementById('list');
+  var count = document.getElementById('count');
+  var add = document.getElementById('add');
+  var pending = null;
+
+  function save() {
+    clearTimeout(pending);
+    pending = setTimeout(function () {
+      fetch(URL, { method: 'PUT', body: JSON.stringify(store) }).catch(function () {});
+    }, 200);
+  }
+
+  function id() {
+    /* Enough to not collide in a list one person is typing into. */
+    return 't' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+  }
+
+  function render() {
+    list.innerHTML = '';
+    if (!store.tasks.length) {
+      var empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = 'Nothing yet. Type above, or ask your agent.';
+      list.appendChild(empty);
+    }
+    store.tasks.forEach(function (task) {
+      var row = document.createElement('li');
+      row.className = 'task';
+      row.setAttribute('data-status', task.status);
+
+      var dot = document.createElement('button');
+      dot.className = 'dot';
+      dot.setAttribute('data-status', task.status);
+      dot.title = 'Change status';
+      dot.addEventListener('click', function () {
+        task.status = STATUSES[(STATUSES.indexOf(task.status) + 1) % STATUSES.length];
+        save();
+        render();
+      });
+
+      var title = document.createElement('button');
+      title.className = 'title';
+      title.textContent = task.title;
+      title.title = 'Rename';
+      title.addEventListener('click', function () {
+        var next = window.prompt('Call it what?', task.title);
+        if (next === null || !next.trim()) return;
+        task.title = next.trim();
+        save();
+        render();
+      });
+
+      var kill = document.createElement('button');
+      kill.className = 'kill';
+      kill.textContent = 'Remove';
+      kill.addEventListener('click', function () {
+        store.tasks = store.tasks.filter(function (t) { return t !== task; });
+        save();
+        render();
+      });
+
+      row.appendChild(dot);
+      row.appendChild(title);
+      row.appendChild(kill);
+      list.appendChild(row);
+    });
+    var open = store.tasks.filter(function (t) { return t.status !== 'done'; }).length;
+    count.textContent = store.tasks.length ? open + ' open, ' + store.tasks.length + ' in all' : '';
+  }
+
+  /* A form, so Enter is the browser's job rather than a key code this has to
+     recognise. One input, no submit button, no page reload. */
+  document.getElementById('addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!add.value.trim()) return;
+    store.tasks.unshift({ id: id(), title: add.value.trim(), status: 'todo' });
+    add.value = '';
+    save();
+    render();
+  });
+
+  fetch(URL)
+    .then(function (r) { return r.json(); })
+    .then(function (loaded) {
+      if (loaded && Array.isArray(loaded.tasks)) store = loaded;
+      render();
+    })
+    .catch(render);
+})();
+</script>
+<script src="/scrapbook/shell.js"></script>
+<script src="/scrapbook/edit.js"></script>
+</body>
+</html>

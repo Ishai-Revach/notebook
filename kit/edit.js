@@ -11,6 +11,9 @@
   var root = document.documentElement;
   var article = document.querySelector('.article');
   if (!article) return;
+  /* A page that says it is an app runs its own thing. Turning it into
+     editable prose would break the very controls someone came here for. */
+  if (document.querySelector('meta[name="scrapbook:app"][content="true"]')) return;
 
   var dirty = false;
   var saveTimer = null;

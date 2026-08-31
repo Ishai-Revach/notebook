@@ -1,4 +1,4 @@
-import { readdir, open } from 'node:fs/promises';
+import { readdir, open, readFile } from 'node:fs/promises';
 import { basename, join, extname, relative, sep } from 'node:path';
 
 // A page declares itself with ordinary <meta> tags, so nothing has to be
@@ -52,7 +52,22 @@ async function* htmlFiles(dir, root) {
  * Scanned on request rather than built, so a page that was just written is in
  * the menu the moment it exists. No build step, which is the whole rule.
  */
+/**
+ * The cheap customisation path: a small json file, for the handful of things
+ * that should not require editing the kit. Anything it cannot express is a
+ * change to the kit, which is sitting right there in the workspace.
+ */
+export async function readConfig(root) {
+  try {
+    const parsed = JSON.parse(await readFile(join(root, 'scrapbook.json'), 'utf8'));
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 export async function buildNav(root) {
+  const config = await readConfig(root);
   const pages = [];
   for await (const file of htmlFiles(root, root)) {
     const head = await readHead(file);
@@ -88,7 +103,8 @@ export async function buildNav(root) {
   return {
     // The folder's own name, so the sidebar can say which workspace this is
     // without anyone having to configure a title.
-    workspace: basename(root),
+    workspace: typeof config.label === 'string' && config.label ? config.label : basename(root),
+    accent: typeof config.accent === 'string' ? config.accent : null,
     pages: ungrouped,
     groups: [...groups].map(([label, items]) => ({ label, items })),
   };

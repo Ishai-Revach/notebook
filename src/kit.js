@@ -19,6 +19,8 @@ const VERSION_FILE = '.kit-version';
 const pristinePath = (root, rel) => join(root, KIT_DIR, PRISTINE, rel);
 const livePath = (root, rel) => join(root, KIT_DIR, rel);
 
+const SEEDS = ['apps/tasks.html'];
+
 async function* walk(dir, base = dir) {
   for (const e of await readdir(dir, { withFileTypes: true })) {
     if (e.name.startsWith('.')) continue;
@@ -30,7 +32,7 @@ async function* walk(dir, base = dir) {
 
 export async function kitFiles() {
   const out = [];
-  for await (const f of walk(KIT_SRC)) out.push(f);
+  for await (const f of walk(KIT_SRC)) if (!SEEDS.includes(f)) out.push(f);
   return out.sort();
 }
 
@@ -104,6 +106,13 @@ export async function init(root) {
     seeded = 'index.html';
     await writeFile(join(root, seeded), pageTemplate('Welcome'));
   }
+  // The board every workspace comes with. Seeded, not vendored: once it is
+  // here it is this workspace's page, and no update reaches back into it.
+  const board = join(root, 'tasks.html');
+  if (!(await stat(board).then(() => true).catch(() => false))) {
+    await place(join(KIT_SRC, 'apps/tasks.html'), board);
+    seeded = seeded ? `${seeded} and tasks.html` : 'tasks.html';
+  }
   return { added, kept, seeded };
 }
 
@@ -157,6 +166,54 @@ export async function update(root, { dryRun = false } = {}) {
   }
   if (!dryRun) await writeFile(join(root, KIT_DIR, VERSION_FILE), await kitVersion());
   return results;
+}
+
+const MAX_APP_BYTES = 2 * 1024 * 1024;
+
+/**
+ * Install a page someone else wrote, from a url, into a workspace.
+ *
+ * An installed page is code. It runs on the workspace's own origin, which
+ * means it can read and write that workspace's tool state and save over its
+ * documents. There is no sandbox that would leave it still able to be a
+ * useful tool, so the honest answer is to make the trust explicit: this only
+ * ever runs because someone typed the url, it refuses to overwrite anything,
+ * and the caller is told plainly what it just allowed.
+ */
+export async function install(root, url, { name } = {}) {
+  let target;
+  try {
+    target = new URL(url);
+  } catch {
+    throw new Error(`not a url: ${url}`);
+  }
+  const localhost = target.hostname === 'localhost' || target.hostname === '127.0.0.1';
+  if (target.protocol !== 'https:' && !(target.protocol === 'http:' && localhost)) {
+    throw new Error('only https, so what arrives is what was sent');
+  }
+
+  const res = await fetch(url).catch((e) => {
+    throw new Error(`could not fetch: ${e.message}`);
+  });
+  if (!res.ok) throw new Error(`${target.href} answered ${res.status}`);
+
+  const type = res.headers.get('content-type') ?? '';
+  if (!/text\/html|application\/xhtml/i.test(type) && type) {
+    throw new Error(`that is ${type.split(';')[0]}, not a page`);
+  }
+  const html = await res.text();
+  if (html.length > MAX_APP_BYTES) throw new Error('that page is too big to install');
+
+  const title = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]?.trim();
+  const base = name || title || target.pathname.split('/').pop()?.replace(/\.html?$/i, '') || 'app';
+  const file = `${base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'app'}.html`;
+
+  const into = join(root, file);
+  if (await stat(into).then(() => true).catch(() => false)) {
+    throw new Error(`${file} is already here. Rename or remove it first.`);
+  }
+  await writeFile(into, html);
+  return { file, title: title ?? file, from: target.href };
 }
 
 /** What you changed in one kit file, against what was shipped. */

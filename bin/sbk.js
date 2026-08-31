@@ -11,6 +11,13 @@ import * as workspaces from '../src/workspaces.js';
 import { writeFile } from 'node:fs/promises';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+
+// Piping into head closes stdout early. That is not a failure worth a stack
+// trace, it is someone reading the first few lines.
+process.stdout.on('error', (err) => {
+  if (err.code === 'EPIPE') process.exit(0);
+  throw err;
+});
 const DEFAULT_PORT = 4321;
 
 const USAGE = `usage:
@@ -27,6 +34,7 @@ const USAGE = `usage:
   sbk restore <file> [dir]      throw away your changes to a kit file
 
   sbk share <page> [dir]        write one file you can send anyone
+  sbk install <url> [dir]       add a page someone else wrote
 
   sbk agent-brief [dir]         the contract, for an agent to read
   sbk workspaces                every workspace you have set up
@@ -176,6 +184,16 @@ if (cmd === 'serve') {
   const all = await workspaces.list();
   if (!all.length) console.log('No workspaces yet. Use: sbk init <folder>');
   for (const w of all) console.log(`  ${w.label.padEnd(18)} :${w.port}  ${w.path}`);
+} else if (cmd === 'install') {
+  const [url, ...tail] = rest;
+  if (!url || url.startsWith('-')) die(USAGE);
+  const { root } = parse(tail);
+  const made = await kit.install(root, url).catch((e) => die(`sbk: ${e.message}`));
+  console.log(`Installed ${made.title} as ${made.file}`);
+  console.log(`  from ${made.from}`);
+  console.log('  it is a page in your workspace now: it can read and write this');
+  console.log('  workspace\'s tool state and save over its documents. Open it and');
+  console.log('  read it if you do not know who wrote it.');
 } else if (cmd === 'forget') {
   const { root } = parse(rest);
   await workspaces.forget(root);
