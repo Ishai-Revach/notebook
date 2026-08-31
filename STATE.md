@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0 through P6 done
-**next move:** P7, going public, see below
+**phase:** P0 through P7 done
+**next move:** P8 and P9, see below
 
 ---
 
@@ -45,6 +45,8 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P7 shipped. README matches what the thing does, CONTRIBUTING says what the project cares about, and CI runs the tests on Node 20, 22 and 24.
+- **2026-08-31** , The no-dashes rule was never actually being enforced. `grep $'\u2014\|\u2013\|\u2192'` returns nothing on macOS, because BSD grep does not understand `\|` alternation, so every check since the rule was written passed no matter what was in the repo. It needs `-E`. The repo turned out to be clean anyway. CI now runs the working form, so it cannot go quiet again.
 - **2026-08-31** , P5 and P6 shipped. `sbk agent-brief` prints the contract rather than storing it, so a pointer left in a project only ever has to say "run this" and can never go stale.
 - **2026-08-31** , `SCRAPBOOK.md` is the one per-workspace file a human edits, and it absorbs the house-style role that the 2026-07-26 decision called `GUIDELINES.md`. One file, not two.
 - **2026-08-31** , A workspace keeps its port for good. Adding or removing another never renumbers the rest, so a bookmark stays valid.

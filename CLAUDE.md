@@ -23,7 +23,7 @@
 
 **Ishai approves every publish action.** Pushing to a remote, creating a GitHub repo, publishing to npm, or deploying only happens when he explicitly asks for it in that specific moment, never assumed from earlier context. Local git commits are fine and expected on their own. When something is ready to go out, say so and wait for him to say go.
 
-**No em-dashes or en-dashes, and no arrow character.** Grep every file before finishing: `grep -n $'—\|–\|→'` must come back empty. Use a hyphen, comma, period, semicolon, or parens. This is zero tolerance and it applies to code comments and commit messages too.
+**No em-dashes or en-dashes, and no arrow character.** Grep every file before finishing, with `-E`: `grep -rEn '—|–|→' .` must come back empty apart from this file. The `-E` matters: macOS ships BSD grep, which does not understand `\|` alternation and reports a clean repo whatever is in it. CI runs the same check. Use a hyphen, comma, period, semicolon, or parens. This is zero tolerance and it applies to code comments and commit messages too.
 
 **Never copy Meridian or client content into this repo.** The reference notebook at `~/Freelance-work/Meridian/platform-design/notebook/` contains client material (Confluence page IDs, artifact URLs, partner names). Read it as reference, port the mechanisms, never copy the content. This repo will be public. Stated as a product constraint in `docs/SPEC.md` section 3 and it is absolute.
 

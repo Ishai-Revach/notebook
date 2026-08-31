@@ -1,0 +1,31 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node --test
+      # The style rule is mechanical, so it is checked rather than remembered.
+      # The pattern is built from bytes so this file does not contain the very
+      # characters it bans, and CLAUDE.md is skipped because it quotes them.
+      - name: no em-dashes, en-dashes or arrows
+        run: |
+          PATTERN=$(printf '\xe2\x80\x94|\xe2\x80\x93|\xe2\x86\x92')
+          if grep -rEn --exclude=CLAUDE.md \
+               --include='*.js' --include='*.md' --include='*.css' \
+               --include='*.json' --include='*.yml' "$PATTERN" . ; then
+            echo "found a dash or arrow character, see CONTRIBUTING.md"
+            exit 1
+          fi

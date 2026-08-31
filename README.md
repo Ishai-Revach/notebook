@@ -8,27 +8,44 @@ You open it like an app. It holds your pages. Some are writing, some are diagram
 
 ## Setting it up
 
-1. Install it once on your computer.
-2. Open it. It asks you to point a workspace at a project folder.
-3. It creates everything it needs inside that folder. You do not set anything up.
-4. Tell your agent what you want. It already knows the scrapbook is there.
+Needs Node 20 or newer, on a Mac.
 
-Repeat step 2 for every project. Client work, home stuff, whatever. Each one is separate and cannot see the others. One menu at the top switches between them.
+```
+npm install -g scrapbook-hub
+sbk init ~/some/project
+sbk start
+```
 
-It stays running. Restart your computer and it is still there.
+That is the whole setup. `init` puts everything it needs inside that folder, `start` serves it and keeps serving it after a restart. It prints the address to open.
 
-## What works on day one
+Repeat `init` for every project. Client work, home stuff, whatever. Each one is separate and cannot see the others, and the workspace name in the sidebar switches between them.
 
-Without asking an agent for anything:
+Already have a folder of pages you like? `sbk add ~/that/folder` serves it exactly as it is and adds nothing to it.
 
-- Create a new page.
+### The commands
+
+| | |
+|---|---|
+| `sbk init [dir]` | set a folder up as a workspace |
+| `sbk add [dir]` | serve a folder as it is, without the kit |
+| `sbk start` | serve every workspace, now and after a restart |
+| `sbk stop` | stop serving |
+| `sbk status` | what is being served, and where |
+| `sbk share <page>` | write one file you can send anyone |
+| `sbk update` | bring the kit up to date, keeping your edits |
+| `sbk agent-brief` | the contract, for an agent to read |
+
+## What works without an agent
+
+Press Edit, and:
+
+- Create a new page from the sidebar.
 - Write on it. Headings, text, lists, links, quotes.
-- Add a text box, move things around, format them.
+- Add a text box and drag it where you want it.
 - Arrange pages into folders and reorder the menu.
-- Use the task board that comes with it.
-- Share a page as a link, or as a single file you can send anyone.
+- Share a page as a single file you can send anyone.
 
-This is the part that has to feel like a normal document app, and it ships first.
+Not yet: a task board that comes with it, and deleting a page. Both are on the way.
 
 ## What you ask the agent for
 
