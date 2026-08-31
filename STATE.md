@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0 done, the kernel serves a workspace over http
-**next move:** P1, see below
+**phase:** P0 and P1 done, the notebook is always on
+**next move:** P2 or P4, see below
 
 ---
 
@@ -14,7 +14,9 @@ This repo is that product. The client notebook stays where it is and becomes one
 
 ## What exists right now
 
-The specs, plus the first slice of the kernel: `nbk serve <folder>` puts a folder of documents on `http://localhost:4321`. Nothing is copied and nothing is rewritten.
+The specs, plus a kernel that serves a folder of documents on `http://localhost:4321` and keeps doing it across restarts. Nothing is copied and nothing is rewritten.
+
+Commands: `nbk serve` (this terminal), `nbk start` (always, and after a reboot), `nbk stop`, `nbk status`.
 
 | File | What |
 |---|---|
@@ -27,12 +29,17 @@ The specs, plus the first slice of the kernel: `nbk serve <folder>` puts a folde
 | `CLAUDE.md` | Project rules for any agent working here |
 | `bin/nbk.js` | The CLI. One command so far: `serve` |
 | `src/serve.js` | The static server: workspace root, directory listing, path escape refused |
+| `src/service.js` | The launchd agent: install, remove, and report what is served |
 | `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
+| `test/service.test.js` | Three cases: the served folder survives the plist round trip |
 
 ## Decisions log
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P1 shipped. Always-on is a launchd agent with `KeepAlive`, and the plist is the only config: the folder being served is remembered as an argument in it, so there is no second place for the answer to live.
+- **2026-08-31** , The Dock icon is Chrome's own "Install page as app", not a generated `.app` bundle. Chrome takes the icon from the page and gets the window right, which is the whole job, for no code.
+- **2026-08-31** , `nbk status` answers "is it running" by asking the port, not by reading launchd. Mid-restart launchd says "spawn scheduled", which is neither yes nor no.
 - **2026-08-31** , P0 shipped. The server has no caching, etags, compression or range requests on purpose. One person, one machine, localhost. Add them when a page actually feels slow.
 - **2026-08-31** , A workspace with no `index.html` gets a plain directory listing rather than a 404. The reference notebook has no front door and does not need one.
 - **2026-07-26** , Basic authoring (new page, write, format, text boxes, folders, menu reorder) moves to the front of the build order. It has to work with no agent involved. Was late in the plan; that was wrong.
@@ -58,11 +65,17 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**P1: always on, and a Dock icon.** A launchd agent so the server survives a restart, plus install-as-app in Chrome so the notebook opens like an application rather than a tab. One afternoon in the estimate.
+Ishai's call between two.
 
-Still true from P0: the client notebook content has not moved and will not. It is served in place.
+**P2, kernel/kit split, vendoring, `nbk update`, generated nav.** The structural one. It has to land before code assumes fixed locations, and retrofitting the merge path later is a rewrite.
 
-The open question from the last session stands. Ishai said file-backed tool storage (P4) is the change he would feel first, in his mornings. It sits behind the kernel/kit split (P2) and authoring (P3). Worth deciding whether to pull it forward.
+**P4, file-backed tool storage, tasks first.** The one he says he would feel first, in his mornings. Out of order, and worth it if the daily payoff matters more than build order.
+
+P3 (authoring) is the real milestone either way and comes after whichever of these goes first.
+
+### Known ceiling, not yet a problem
+
+The launchd agent runs `bin/nbk.js` from wherever the repo is checked out when `nbk start` runs. Right now that is a worktree, so removing the worktree breaks always-on. It stops mattering the moment the package is installed globally, which is the natural thing to do once this is merged to `main`.
 
 ## Session continuity
 
