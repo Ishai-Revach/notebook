@@ -1,8 +1,9 @@
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
 import { stat, readdir, realpath, writeFile, mkdir, rename } from 'node:fs/promises';
-import { join, resolve, extname, sep, posix } from 'node:path';
+import { dirname, join, resolve, extname, sep, posix } from 'node:path';
 import { buildNav } from './nav.js';
+import { pageTemplate } from './kit.js';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -34,6 +35,24 @@ const MAX_STATE_BYTES = 5 * 1024 * 1024;
 
 function isStatePath(urlPath) {
   return /^\/state\/[a-z0-9][a-z0-9-]*\.json$/.test(urlPath);
+}
+
+// A document is writable; the kit and the pristine copy behind it are not.
+// Editing the kit is a thing you do in your editor, on purpose, not something
+// a page should be able to do to itself by accident.
+function isDocumentPath(urlPath) {
+  return /\.html$/i.test(urlPath) && !/^\/scrapbook\//.test(urlPath) && !urlPath.includes('..');
+}
+
+/** A title becomes a file name. Anything that is not a letter or a digit goes. */
+export function slugify(title) {
+  const slug = title
+    .toLowerCase()
+    .replace(/['\u2019]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return slug || 'untitled';
 }
 
 async function readBody(req, limit) {
@@ -108,27 +127,53 @@ export function createScrapbookServer(root) {
     }
 
     if (req.method === 'PUT') {
-      if (!isStatePath(urlPath)) return send(res, 403, `Only ${STATE_DIR}/<name>.json can be written`);
+      const state = isStatePath(urlPath);
+      if (!state && !isDocumentPath(urlPath)) {
+        return send(res, 403, `Only ${STATE_DIR}/<name>.json and documents can be written`);
+      }
       let body;
       try {
         body = await readBody(req, MAX_STATE_BYTES);
       } catch {
         return send(res, 413, 'Too large');
       }
-      try {
-        JSON.parse(body);
-      } catch {
-        return send(res, 400, 'Not JSON');
+      if (state) {
+        try {
+          JSON.parse(body);
+        } catch {
+          return send(res, 400, 'Not JSON');
+        }
       }
       const file = resolve(base, '.' + urlPath);
-      await mkdir(join(base, STATE_DIR), { recursive: true });
+      if (file !== base && !file.startsWith(base + sep)) return send(res, 403, 'Forbidden');
+      await mkdir(dirname(file), { recursive: true });
       // Write and rename, so a crash mid-write cannot leave a half file where
-      // the tool's whole state used to be.
+      // a document or a whole task board used to be.
       const tmp = `${file}.${process.pid}.tmp`;
       await writeFile(tmp, body);
       await rename(tmp, file);
       return send(res, 204, '');
     }
+
+    // Creating a page is a POST because the server picks the file name.
+    if (req.method === 'POST' && urlPath === '/_new') {
+      let wanted;
+      try {
+        wanted = JSON.parse(await readBody(req, 64 * 1024));
+      } catch {
+        return send(res, 400, 'Not JSON');
+      }
+      const title = String(wanted.title ?? '').trim() || 'Untitled';
+      let name = slugify(title);
+      // Never write over a page that already exists, whatever it is called.
+      let href = `${name}.html`;
+      for (let n = 2; await stat(join(base, href)).then(() => true).catch(() => false); n++) {
+        href = `${name}-${n}.html`;
+      }
+      await writeFile(join(base, href), pageTemplate(title, wanted.group));
+      return send(res, 200, JSON.stringify({ href }), 'application/json; charset=utf-8');
+    }
+
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
 
     // The menu is read from the workspace on request, not built into a file,

@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { createScrapbookServer } from '../src/serve.js';
 import { start, stop, status, LOG } from '../src/service.js';
 import * as kit from '../src/kit.js';
+import { share } from '../src/share.js';
+import { writeFile } from 'node:fs/promises';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_PORT = 4321;
@@ -19,7 +21,9 @@ const USAGE = `usage:
   sbk update [dir]              bring the kit up to date, keeping your edits
   sbk update --check [dir]      is there anything to update
   sbk diff <file> [dir]         what you changed in a kit file
-  sbk restore <file> [dir]      throw away your changes to a kit file`;
+  sbk restore <file> [dir]      throw away your changes to a kit file
+
+  sbk share <page> [dir]        write one file you can send anyone`;
 
 function die(msg) {
   console.error(msg);
@@ -117,6 +121,16 @@ if (cmd === 'serve') {
     const ok = await kit.restore(root, file);
     console.log(ok ? `Restored ${file} to the shipped version.` : `sbk: no shipped version of ${file}`);
   }
+} else if (cmd === 'share') {
+  const [page, ...tail] = rest;
+  if (!page || page.startsWith('-')) die(USAGE);
+  const { root } = parse(tail);
+  const { html, skipped } = await share(root, page).catch((e) => die(`sbk: ${e.message}`));
+  const out = resolve(root, page.replace(/\.html$/i, '') + '.share.html');
+  await writeFile(out, html);
+  console.log(`Wrote ${out}`);
+  console.log('  one file, nothing left to fetch. Send it to anyone.');
+  for (const f of skipped) console.log(`  left out (too big to inline): ${f}`);
 } else {
   die(USAGE);
 }

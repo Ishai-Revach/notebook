@@ -51,15 +51,18 @@ export async function kitVersion() {
  * it is a seed, not a shipped file: once a page exists it is yours, and no
  * update should ever reach back into it.
  */
-export function pageTemplate(title) {
+export function pageTemplate(title, group) {
+  const escape = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const groupTag = group ? `\n<meta name="scrapbook:group" content="${escape(group)}">` : '';
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
+<title>${escape(title)}</title>${groupTag}
 <link rel="stylesheet" href="/${KIT_DIR}/design-system/tokens.css">
 <link rel="stylesheet" href="/${KIT_DIR}/design-system/components.css">
+<link rel="stylesheet" href="/${KIT_DIR}/design-system/edit.css">
 <style>
   /* A page must be able to scroll before anything else is true of it. */
   html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
@@ -67,10 +70,11 @@ export function pageTemplate(title) {
 </head>
 <body>
 <article class="article">
-  <h1>${title}</h1>
+  <h1>${escape(title)}</h1>
   <p class="lede">Write here, or ask your agent to.</p>
 </article>
 <script src="/${KIT_DIR}/shell.js"></script>
+<script src="/${KIT_DIR}/edit.js"></script>
 </body>
 </html>
 `;

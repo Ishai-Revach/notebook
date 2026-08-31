@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0, P1, P2, P4 done
-**next move:** P3, authoring, see below
+**phase:** P0, P1, P2, P3, P4 done
+**next move:** P5, see below
 
 ---
 
@@ -34,6 +34,8 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 | `kit/` | The vendored source: design system, shell. Copied into each workspace and yours to edit |
 | `src/kit.js` | Vendoring, the three-way merge behind `sbk update`, `diff` and `restore` |
 | `src/nav.js` | Reads the workspace and builds the menu, on request, with no build step |
+| `src/share.js` | Turns one page into a single file with nothing left to fetch |
+| `kit/edit.js` | Authoring: edit mode, the toolbar, text boxes, autosave |
 | `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
 | `test/service.test.js` | Three cases: the served folder survives the plist round trip |
 
@@ -41,6 +43,12 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P3 shipped, except the task board. New page, write, format, links, lists, quotes, text boxes you can drag, folders, menu order, and share as one file, all with no agent involved.
+- **2026-08-31** , A page saves itself by serialising its own document with the injected chrome stripped out. Everything the kit injects carries `data-sb-chrome`, so what is on screen and what is on disk cannot drift apart, and the save works for anything a page grows later.
+- **2026-08-31** , Formatting uses `document.execCommand`. It is deprecated and it is still the only rich-text editing every browser implements. The replacement is writing a selection model, which is a project of its own.
+- **2026-08-31** , Moving a page in the menu renumbers every page in that list, not just the one moved. Only some pages carry an order, so shuffling a single number leaves gaps that read as random.
+- **2026-08-31** , A page with text boxes carries its own `min-height`. A positioned box adds nothing to the page's height, so without it the box falls outside the scroll container and is clipped. Found by looking, not by reading the code.
+- **2026-08-31** , A shared file drops the kit's scripts rather than inlining them. An Edit button that cannot save is worse than no Edit button.
 - **2026-08-31** , P2 shipped. The kit is vendored into `<workspace>/scrapbook/`, with the exact shipped copy kept beside it under `.pristine/`. Hashes would spot a local edit but cannot merge around one, and a three-way merge needs the original text.
 - **2026-08-31** , `sbk update` merges with `git merge-file`. Every machine that can run this has git, and writing another three-way merge would be a worse version of a solved problem.
 - **2026-08-31** , A conflicted file leaves `.pristine` untouched, so running update again retries the same merge instead of treating the conflict as resolved.
@@ -77,9 +85,15 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**P3, authoring.** New page, write, format, text boxes, folders, menu reorder, with no agent involved. The day-one promise, and the real milestone.
+**P5, the CLI and the agent contract:** `sbk agent-brief`, the workspace guidelines file, and whatever `init` should be leaving behind for an agent to read.
+
+Then P6 (a second workspace, to prove isolation), P7 (public: README, CONTRIBUTING, CI), P8 (config and hooks), P9 (the app menu).
 
 ### Known ceilings, not yet a problem
+
+**The task board is not in the kit yet.** Day one says a workspace comes with one. What exists is the storage (P4) and the reference notebook's own board wired to it. Porting a 2,600 line board is its own piece of work, and it belongs with P9, where tools become installable things rather than files copied by hand.
+
+**No delete.** A page can be made, renamed, moved and shared, but not deleted from the menu. Deleting a document is the one authoring action that loses work, and it should ask properly rather than sit in a row menu next to Rename.
 
 **Which browser migrates the board.** A tool with no state file yet is migrated by the first browser that opens it and already holds a board. If a second browser gets there first, its own copy wins and the other is masked, not lost, since localStorage still holds it. Deleting the state file and reloading the right browser recovers it. It stops mattering once every workspace has been opened once.
 

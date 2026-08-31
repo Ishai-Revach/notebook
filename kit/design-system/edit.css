@@ -1,0 +1,83 @@
+/* Authoring chrome. Everything here is injected by edit.js and never saved
+   into a document, so it can change freely without touching your pages. */
+
+.sb-edit-btn {
+  position: fixed; right: 20px; bottom: 20px; z-index: 60;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 15px; border-radius: 999px; border: 1px solid var(--color-cream-300);
+  background: var(--color-cream-100); color: var(--color-ink-700);
+  font-family: var(--font-body); font-size: var(--text-small); font-weight: 600;
+  cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.sb-edit-btn:hover { border-color: var(--sb-primary); color: var(--sb-primary); }
+.sb-edit-btn[aria-pressed="true"] { background: var(--sb-primary); border-color: var(--sb-primary); color: #fff; }
+
+.sb-toolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 58;
+  display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
+  padding: 8px 12px 8px 260px;
+  background: var(--color-cream-100); border-bottom: 1px solid var(--color-cream-300);
+}
+.sb-tool {
+  min-width: 30px; height: 30px; padding: 0 8px; border-radius: 6px;
+  border: 1px solid transparent; background: none; cursor: pointer;
+  font-family: var(--font-body); font-size: var(--text-small); color: var(--color-ink-700);
+}
+.sb-tool:hover { background: var(--color-cream-200); }
+.sb-tool--on { background: var(--color-cream-300); }
+.sb-tool-sep { width: 1px; height: 18px; margin: 0 6px; background: var(--color-cream-300); }
+.sb-tool-state { margin-left: auto; font-size: var(--text-tiny); color: var(--color-ink-500); }
+
+/* An editable page gets out of the way of the toolbar rather than under it. */
+.sb-editing body { padding-top: 47px; }
+.sb-editing .article[contenteditable] { outline: none; }
+.sb-editing .article[contenteditable]:focus-visible { outline: none; }
+
+/* A text box is a positioned block a page can carry anywhere. It is ordinary
+   markup once saved, so a page with one in it still opens without the kit. */
+.article:has(.sb-textbox) { position: relative; }
+.sb-textbox {
+  position: absolute; z-index: 2; min-width: 120px; max-width: 90%;
+  padding: var(--space-default); border-radius: 8px;
+  background: var(--color-cream-200); border: 1px solid var(--color-cream-300);
+  font-size: var(--text-small); color: var(--color-ink-700);
+}
+.sb-editing .sb-textbox { cursor: move; }
+.sb-editing .sb-textbox:hover { border-color: var(--sb-primary); }
+
+/* A menu row holds the link and the row menu, which only shows on approach so
+   the sidebar reads as a list of pages rather than a list of controls. */
+.sb-nav-row { display: flex; align-items: center; gap: 2px; position: relative; }
+.sb-nav-row .sb-nav-link { flex: 1; min-width: 0; }
+.sb-nav-row .sb-nav-menu { opacity: 0; transition: opacity 120ms ease; }
+.sb-nav-row:hover .sb-nav-menu,
+.sb-nav-row:focus-within .sb-nav-menu { opacity: 1; }
+.sb-nav-menu-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; border: 0; border-radius: 5px;
+  background: none; color: var(--color-ink-500); cursor: pointer;
+}
+.sb-nav-menu-btn:hover { background: var(--color-cream-300); color: var(--color-ink-900); }
+.sb-nav-menu-btn svg { width: 12px; height: 12px; }
+.sb-nav-menu-list {
+  position: absolute; right: 0; top: 100%; z-index: 70; min-width: 148px;
+  display: flex; flex-direction: column; padding: 4px;
+  background: var(--color-cream-100); border: 1px solid var(--color-cream-300);
+  border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.10);
+}
+.sb-nav-menu-list button {
+  text-align: left; padding: 6px 8px; border: 0; border-radius: 5px;
+  background: none; cursor: pointer;
+  font-family: var(--font-body); font-size: var(--text-small); color: var(--color-ink-700);
+}
+.sb-nav-menu-list button:hover { background: var(--color-cream-200); color: var(--color-ink-900); }
+
+/* The add button is one line, always. */
+.sb-nav-add { margin-top: var(--space-default); }
+.sb-nav-add-btn {
+  display: block; width: 100%; white-space: nowrap; text-align: left;
+  padding: 6px 10px; border: 0; border-radius: 6px; background: none;
+  font-family: var(--font-body); font-size: var(--text-small); color: var(--color-ink-500);
+  cursor: pointer;
+}
+.sb-nav-add-btn:hover { background: var(--color-cream-200); color: var(--sb-primary); }

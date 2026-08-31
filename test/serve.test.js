@@ -97,11 +97,38 @@ test('state that was never saved reads as an empty object, not a 404', async () 
   assert.deepEqual(await res.json(), {});
 });
 
-test('refuses to write anywhere but the state folder', async () => {
-  assert.equal((await put('/tasks.html', '{}')).status, 403);
-  assert.equal((await put('/state/../tasks.html', '{}')).status, 403);
+test('refuses to write outside the state folder and the documents', async () => {
+  // Encoded, because fetch would normalise a plain ../ away before sending.
+  assert.equal((await put('/state/..%2ftasks.html', '{}')).status, 403);
+  assert.equal((await put('/..%2fsecrets%2fx.html', '{}')).status, 403);
   assert.equal((await put('/state/notes.txt', '{}')).status, 403);
   assert.equal((await put('/state/sub/dir.json', '{}')).status, 403);
+  assert.equal((await put('/design-system/tokens.css', 'body{}')).status, 403);
+  // The kit is edited on purpose, in an editor, not by a page saving itself.
+  assert.equal((await put('/scrapbook/shell.js', 'x')).status, 403);
+  assert.equal((await put('/scrapbook/anything.html', 'x')).status, 403);
+});
+
+test('a document saves itself, and comes back as it was written', async () => {
+  const page = '<!doctype html><html><head><title>Edited</title></head><body><p>hi</p></body></html>';
+  assert.equal((await put('/tasks.html', page)).status, 204);
+  assert.equal(await (await fetch(`${origin}/tasks.html`)).text(), page);
+});
+
+test('creating a page picks a name from the title and never lands on an existing one', async () => {
+  const make = (title) => fetch(`${origin}/_new`, { method: 'POST', body: JSON.stringify({ title }) }).then((r) => r.json());
+  assert.deepEqual(await make('My First Page!'), { href: 'my-first-page.html' });
+  assert.deepEqual(await make('My first page'), { href: 'my-first-page-2.html' });
+  const html = await (await fetch(`${origin}/my-first-page.html`)).text();
+  assert.match(html, /<title>My First Page!<\/title>/);
+});
+
+test('a new page in a group says so in its own markup', async () => {
+  const made = await fetch(`${origin}/_new`, {
+    method: 'POST', body: JSON.stringify({ title: 'Grouped', group: 'Research' }),
+  }).then((r) => r.json());
+  const html = await (await fetch(`${origin}/${made.href}`)).text();
+  assert.match(html, /name="scrapbook:group" content="Research"/);
 });
 
 test('refuses a body that is not JSON, so a tool cannot corrupt its own state', async () => {

@@ -52,7 +52,9 @@ test('a hidden page stays out of the menu', async () => {
 
 test('a grouped page lands in its group, not the top level', async () => {
   const nav = await buildNav(root);
-  assert.deepEqual(nav.groups, [{ label: 'Research', items: [{ href: 'research/journey.html', label: 'Journey' }] }]);
+  assert.deepEqual(nav.groups, [
+    { label: 'Research', items: [{ href: 'research/journey.html', label: 'Journey', group: 'Research' }] },
+  ]);
 });
 
 test('the kit and the state folder are not pages', async () => {

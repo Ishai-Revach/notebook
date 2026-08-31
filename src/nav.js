@@ -80,7 +80,7 @@ export async function buildNav(root) {
   for (const p of pages.sort(sort)) {
     const key = p.group ?? '';
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push({ href: p.href, label: p.label });
+    groups.get(key).push({ href: p.href, label: p.label, group: p.group });
   }
   // Ungrouped pages sit at the top, the way a menu with no sections would.
   const ungrouped = groups.get('') ?? [];
