@@ -1,8 +1,8 @@
 # State
 
 **last_updated:** 2026-08-31
-**phase:** P0, P1, P2, P3, P4 done
-**next move:** P5, see below
+**phase:** P0 through P6 done
+**next move:** P7, going public, see below
 
 ---
 
@@ -36,6 +36,8 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 | `src/nav.js` | Reads the workspace and builds the menu, on request, with no build step |
 | `src/share.js` | Turns one page into a single file with nothing left to fetch |
 | `kit/edit.js` | Authoring: edit mode, the toolbar, text boxes, autosave |
+| `src/agent.js` | `sbk agent-brief`, the pointer blocks, the seeded SCRAPBOOK.md |
+| `src/workspaces.js` | The registry: which folders are workspaces, and on which port |
 | `test/serve.test.js` | `node --test`, ten cases including traversal and symlink escape |
 | `test/service.test.js` | Three cases: the served folder survives the plist round trip |
 
@@ -43,6 +45,12 @@ Commands: `sbk serve` (this terminal), `sbk start` (always, and after a reboot),
 
 Newest first. One line each. Reasoning lives in the specs.
 
+- **2026-08-31** , P5 and P6 shipped. `sbk agent-brief` prints the contract rather than storing it, so a pointer left in a project only ever has to say "run this" and can never go stale.
+- **2026-08-31** , `SCRAPBOOK.md` is the one per-workspace file a human edits, and it absorbs the house-style role that the 2026-07-26 decision called `GUIDELINES.md`. One file, not two.
+- **2026-08-31** , A workspace keeps its port for good. Adding or removing another never renumbers the rest, so a bookmark stays valid.
+- **2026-08-31** , One always-on process serves every registered workspace, each on its own port. A switcher across processes would need a supervisor and a proxy; across ports it is a link.
+- **2026-08-31** , `sbk add` registers a folder and serves it exactly as it is. A folder that already has its own design system and shell does not want the kit dropped on top of it, which is how the reference notebook is served.
+- **2026-08-31** , The switcher at `/_hub` is served by the kernel, so a workspace edited into a broken state cannot take away the way out of it.
 - **2026-08-31** , P3 shipped, except the task board. New page, write, format, links, lists, quotes, text boxes you can drag, folders, menu order, and share as one file, all with no agent involved.
 - **2026-08-31** , A page saves itself by serialising its own document with the injected chrome stripped out. Everything the kit injects carries `data-sb-chrome`, so what is on screen and what is on disk cannot drift apart, and the save works for anything a page grows later.
 - **2026-08-31** , Formatting uses `document.execCommand`. It is deprecated and it is still the only rich-text editing every browser implements. The replacement is writing a selection model, which is a project of its own.
@@ -85,9 +93,9 @@ Small, and none of it blocks P0.
 
 ## Next move
 
-**P5, the CLI and the agent contract:** `sbk agent-brief`, the workspace guidelines file, and whatever `init` should be leaving behind for an agent to read.
+**P7, going public.** README that matches what the thing now does, CONTRIBUTING, CI running the tests, and the repo already exists and is already public at `Ishai-Revach/scrapbook`.
 
-Then P6 (a second workspace, to prove isolation), P7 (public: README, CONTRIBUTING, CI), P8 (config and hooks), P9 (the app menu).
+Then P8 (config and hooks) and P9 (the app menu, which is where a kit task board belongs).
 
 ### Known ceilings, not yet a problem
 

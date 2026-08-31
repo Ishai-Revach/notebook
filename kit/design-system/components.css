@@ -460,7 +460,9 @@ tbody tr:nth-child(even) { background: var(--color-cream-200); }
 .sb-logo-text {
   font-family: var(--font-heading); font-weight: 700; font-size: var(--text-small);
   letter-spacing: 0.01em; color: var(--color-ink-900); text-transform: capitalize;
+  text-decoration: none;
 }
+.sb-logo-text:hover { color: var(--sb-primary); }
 .sb-side nav { display: flex; flex-direction: column; gap: 2px; }
 .sb-side nav a, .sb-side nav .sb-nav-link {
   display: block;

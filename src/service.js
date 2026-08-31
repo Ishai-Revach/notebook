@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { list } from './workspaces.js';
 
 const run = promisify(execFile);
 
@@ -60,12 +61,20 @@ async function launchctl(...args) {
 }
 
 /** Install and start the launchd agent. Replaces any previous one. */
-export async function start({ root, port, entry }) {
+export async function start({ entry }) {
   await mkdir(join(homedir(), 'Library', 'LaunchAgents'), { recursive: true });
   await launchctl('bootout', `${DOMAIN}/${LABEL}`);
-  await writeFile(PLIST, plist([process.execPath, entry, 'serve', root, '--port', String(port)]));
-  const res = await launchctl('bootstrap', DOMAIN, PLIST);
-  if (res.code) throw new Error(res.stderr.trim() || 'launchctl bootstrap failed');
+  await writeFile(PLIST, plist([process.execPath, entry, 'serve-all']));
+  /* bootout returns before launchd has finished tearing the old job down,
+     and bootstrapping into a domain that still holds it fails with an I/O
+     error. Retry rather than making the caller run stop and start by hand. */
+  let res;
+  for (let i = 0; i < 12; i++) {
+    res = await launchctl('bootstrap', DOMAIN, PLIST);
+    if (!res.code) return;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error(res.stderr.trim() || 'launchctl bootstrap failed');
 }
 
 /** Stop the agent and remove it, so it does not come back after a restart. */
@@ -75,22 +84,24 @@ export async function stop() {
 }
 
 /**
- * What the agent is doing right now.
- * ponytail: "is it running" is answered by asking the port, not by scraping
+ * Is the always-on agent installed, and is it answering.
+ * ponytail: "is it running" is answered by asking a port, not by scraping
  * launchctl. launchd reports "spawn scheduled" mid-restart, which is neither
  * yes nor no, and the only thing the answer is used for is whether the
  * scrapbook opens.
  */
 export async function status() {
-  let installed;
   try {
-    installed = await readFile(PLIST, 'utf8');
+    await readFile(PLIST, 'utf8');
   } catch {
-    return { installed: false, running: false };
+    return { installed: false, running: false, workspaces: [] };
   }
-  const { root, port } = readPlist(installed);
-  const running = port
-    ? await fetch(`http://localhost:${port}/`).then(() => true).catch(() => false)
-    : false;
-  return { installed: true, running, root, port };
+  const workspaces = await list();
+  const checked = await Promise.all(
+    workspaces.map(async (w) => ({
+      ...w,
+      up: await fetch(`http://localhost:${w.port}/`).then(() => true).catch(() => false),
+    })),
+  );
+  return { installed: true, running: checked.some((w) => w.up), workspaces: checked };
 }

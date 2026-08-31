@@ -4,6 +4,7 @@ import { stat, readdir, realpath, writeFile, mkdir, rename } from 'node:fs/promi
 import { dirname, join, resolve, extname, sep, posix } from 'node:path';
 import { buildNav } from './nav.js';
 import { pageTemplate } from './kit.js';
+import { list as listWorkspaces } from './workspaces.js';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -104,6 +105,39 @@ ${rows}
 </ul></body></html>`;
 }
 
+async function hubPage(current) {
+  const workspaces = await listWorkspaces();
+  const rows = workspaces
+    .map((w) => {
+      const here = w.path === current;
+      return `<li${here ? ' class="here"' : ''}><a href="http://localhost:${w.port}/">` +
+        `<strong>${escapeHtml(w.label)}</strong><span>${escapeHtml(w.path)}</span></a>` +
+        `${here ? '<em>open</em>' : ''}</li>`;
+    })
+    .join('\n');
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Workspaces</title>
+<style>
+  html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+  body { margin: 0; padding: 12vh 24px; background: #fdfcf9; color: #1a1a1a;
+         font: 15px/1.6 ui-sans-serif, system-ui, sans-serif; }
+  main { max-width: 34rem; margin: 0 auto; }
+  h1 { font-size: 1rem; font-weight: 600; color: #6b6b6b; margin: 0 0 1.5rem; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eee9e1; }
+  li a { flex: 1; display: flex; flex-direction: column; gap: 2px;
+         padding: 14px 4px; text-decoration: none; color: inherit; }
+  li a:hover strong { color: #b5502a; }
+  li span { font-size: 12px; color: #8a8a8a; word-break: break-all; }
+  li em { font-style: normal; font-size: 11px; letter-spacing: .04em;
+          text-transform: uppercase; color: #b5502a; }
+  p { color: #8a8a8a; }
+</style></head>
+<body><main><h1>Workspaces</h1>
+${rows ? `<ul>\n${rows}\n</ul>` : '<p>None registered yet. Run <code>sbk init &lt;folder&gt;</code>.</p>'}
+</main></body></html>`;
+}
+
 function stream(res, file) {
   res.writeHead(200, { 'content-type': TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream' });
   createReadStream(file).on('error', () => res.destroy()).pipe(res);
@@ -175,6 +209,13 @@ export function createScrapbookServer(root) {
     }
 
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
+
+    /* The switcher is served by the kernel, not by the workspace, so a
+       workspace that has been edited into a broken state cannot take away
+       the way out of it. This is the one surface a workspace cannot change. */
+    if (urlPath === '/_hub') {
+      return send(res, 200, await hubPage(base), 'text/html; charset=utf-8');
+    }
 
     // The menu is read from the workspace on request, not built into a file,
     // so a page that was written a second ago is already in it.

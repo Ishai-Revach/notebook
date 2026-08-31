@@ -121,8 +121,12 @@
   function renderHeader(nav) {
     var header = document.querySelector('.sb-side-header');
     if (!header || header.children.length || !nav.workspace) return;
-    var name = document.createElement('span');
+    /* The way out of a workspace is a plain link to a kernel route, so it
+       still works when everything else on the page is broken. */
+    var name = document.createElement('a');
     name.className = 'sb-logo-text';
+    name.href = '/_hub';
+    name.title = 'Switch workspace';
     name.textContent = nav.workspace;
     header.appendChild(name);
   }

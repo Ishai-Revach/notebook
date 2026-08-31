@@ -6,6 +6,8 @@ import { createScrapbookServer } from '../src/serve.js';
 import { start, stop, status, LOG } from '../src/service.js';
 import * as kit from '../src/kit.js';
 import { share } from '../src/share.js';
+import { agentBrief, seedBrief, writePointers } from '../src/agent.js';
+import * as workspaces from '../src/workspaces.js';
 import { writeFile } from 'node:fs/promises';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -18,12 +20,17 @@ const USAGE = `usage:
   sbk status                    what is being served, and where
 
   sbk init [dir]                set a folder up as a workspace
+  sbk add [dir]                 serve a folder as it is, without the kit
   sbk update [dir]              bring the kit up to date, keeping your edits
   sbk update --check [dir]      is there anything to update
   sbk diff <file> [dir]         what you changed in a kit file
   sbk restore <file> [dir]      throw away your changes to a kit file
 
-  sbk share <page> [dir]        write one file you can send anyone`;
+  sbk share <page> [dir]        write one file you can send anyone
+
+  sbk agent-brief [dir]         the contract, for an agent to read
+  sbk workspaces                every workspace you have set up
+  sbk forget [dir]              stop serving a folder, changing nothing in it`;
 
 function die(msg) {
   console.error(msg);
@@ -61,28 +68,55 @@ if (cmd === 'serve') {
     console.log(`Scrapbook serving ${root}`);
     console.log(`  http://localhost:${port}/`);
   });
+} else if (cmd === 'serve-all') {
+  const all = await workspaces.list();
+  if (!all.length) die('sbk: no workspaces registered. Run: sbk init <folder>');
+  for (const w of all) {
+    const server = createScrapbookServer(w.path);
+    server.on('error', (err) => console.error(`sbk: ${w.label}: ${err.message}`));
+    server.listen(w.port, '127.0.0.1', () => {
+      console.log(`${w.label} -> http://localhost:${w.port}/  (${w.path})`);
+    });
+  }
 } else if (cmd === 'start') {
-  const { root, port } = parse(rest);
-  await start({ root, port, entry: join(HERE, 'sbk.js') }).catch((e) => die(`sbk: ${e.message}`));
-  // launchd reports success the moment it accepts the job, not when the port is
-  // open. Poll briefly so "started" means the scrapbook actually answers.
-  const url = `http://localhost:${port}/`;
+  // Registering first means `sbk start <new folder>` just works, and the
+  // agent that comes up serves every workspace, not only the last one named.
+  const named = rest.some((a) => !a.startsWith('-') && rest[rest.indexOf(a) - 1] !== '--port');
+  const { root } = parse(rest);
+  const entry = await (named ? workspaces.register(root) : Promise.resolve(null));
+  const all = await workspaces.list();
+  if (!all.length) die('sbk: no workspaces yet. Run: sbk init <folder>');
+  await start({ entry: join(HERE, 'sbk.js') }).catch((e) => die(`sbk: ${e.message}`));
+
+  const first = entry ?? all[0];
+  const url = `http://localhost:${first.port}/`;
   let up = false;
   for (let i = 0; i < 20 && !up; i++) {
     up = await fetch(url).then(() => true).catch(() => false);
     if (!up) await new Promise((r) => setTimeout(r, 250));
   }
-  console.log(up ? `Scrapbook is serving ${root}` : `sbk: started, but nothing answered on ${url}`);
-  console.log(`  ${url}`);
-  if (!up) console.log(`  check ${LOG}`);
+  if (!up) {
+    console.log(`sbk: started, but nothing answered on ${url}`);
+    console.log(`  check ${LOG}`);
+  } else {
+    for (const w of all) console.log(`${w.label.padEnd(20)} http://localhost:${w.port}/`);
+    console.log(`\nSwitch between them at ${url}_hub`);
+  }
 } else if (cmd === 'stop') {
   await stop();
   console.log('Scrapbook stopped.');
 } else if (cmd === 'status') {
   const s = await status();
-  if (!s.installed) console.log('Not set up to run on its own. Use: sbk start <folder>');
-  else if (!s.running) console.log(`Installed but not running. Check ${LOG}`);
-  else console.log(`Serving ${s.root}\n  http://localhost:${s.port}/`);
+  if (!s.installed) {
+    console.log('Not set up to run on its own. Use: sbk start <folder>');
+  } else if (!s.workspaces.length) {
+    console.log('Running, but no workspaces registered. Use: sbk init <folder>');
+  } else {
+    for (const w of s.workspaces) {
+      console.log(`${w.up ? 'up  ' : 'down'}  ${w.label.padEnd(20)} http://localhost:${w.port}/  ${w.path}`);
+    }
+    if (!s.running) console.log(`\nNothing is answering. Check ${LOG}`);
+  }
 } else if (cmd === 'init') {
   const { root } = parse(rest);
   const { added, kept, seeded } = await kit.init(root);
@@ -90,7 +124,20 @@ if (cmd === 'serve') {
   if (added.length) console.log(`  added ${added.length} file${added.length === 1 ? '' : 's'} under ${kit.KIT_DIR}/`);
   if (kept.length) console.log(`  left ${kept.length} of your own file${kept.length === 1 ? '' : 's'} alone`);
   if (seeded) console.log(`  wrote ${seeded} so there is something to open`);
+  if (await seedBrief(root)) console.log('  wrote SCRAPBOOK.md, the house style your agent reads');
+  const pointed = await writePointers(root);
+  if (pointed.length) console.log(`  pointed your agent at it in ${pointed.join(', ')}`);
+  await workspaces.register(root);
   console.log(`  next: sbk start ${root === process.cwd() ? '.' : root}`);
+} else if (cmd === 'add') {
+  /* A folder that already has its own design system, its own shell and its
+     own pages does not want the kit dropped on top of it. Register it and
+     serve it exactly as it is. */
+  const { root } = parse(rest);
+  const entry = await workspaces.register(root);
+  console.log(`Serving ${root} as it is`);
+  console.log(`  http://localhost:${entry.port}/`);
+  console.log('  nothing was added to it. Use sbk init if you want the kit.');
 } else if (cmd === 'update') {
   const check = rest.includes('--check');
   const dry = check || rest.includes('--dry-run');
@@ -121,6 +168,18 @@ if (cmd === 'serve') {
     const ok = await kit.restore(root, file);
     console.log(ok ? `Restored ${file} to the shipped version.` : `sbk: no shipped version of ${file}`);
   }
+} else if (cmd === 'agent-brief') {
+  const { root } = parse(rest);
+  const known = (await workspaces.list()).find((w) => w.path === root);
+  console.log(agentBrief(root, { port: known ? known.port : null }));
+} else if (cmd === 'workspaces') {
+  const all = await workspaces.list();
+  if (!all.length) console.log('No workspaces yet. Use: sbk init <folder>');
+  for (const w of all) console.log(`  ${w.label.padEnd(18)} :${w.port}  ${w.path}`);
+} else if (cmd === 'forget') {
+  const { root } = parse(rest);
+  await workspaces.forget(root);
+  console.log(`Stopped serving ${root}. Nothing in it was changed.`);
 } else if (cmd === 'share') {
   const [page, ...tail] = rest;
   if (!page || page.startsWith('-')) die(USAGE);
